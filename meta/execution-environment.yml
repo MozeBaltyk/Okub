@@ -1,0 +1,25 @@
+---
+version: 3
+
+dependencies:
+  python: ee-requirements.txt
+  galaxy: ee-requirements.yml
+  system: ee-bindeps.txt
+
+# Custom Dependencies
+additional_build_steps:
+  prepend_final: |
+    RUN pip3 install --upgrade pip setuptools
+  append_final:
+    - RUN $(MAKE) -C ./scripts/prerequis arkade
+    - RUN $(MAKE) -C ./scripts/prerequis images
+
+images:
+  base_image:
+    name: registry.redhat.io/ansible-automation-platform-24/ee-minimal-rhel8:latest
+
+# Check documentation:
+# https://docs.ansible.com/automation-controller/latest/html/userguide/ee_reference.html
+
+# Run :
+# ansible-builder build --tag test --container-runtime podman -f meta/execution-environment.yml

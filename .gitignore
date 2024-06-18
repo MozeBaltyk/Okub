@@ -1,0 +1,21 @@
+# tmp/state/secrets
+.*.swp
+.govmomi
+.terraform*
+terraform.tfstate*
+.venv/
+*kubeconfig.yaml
+Chart.lock
+# Workstation
+.DS_Store
+.vscode
+# loaded images
+**/roles/**/files/images/*
+images
+# Galaxy artifacts.
+*.tar.gz
+*.zip
+*.iso
+*.log
+*.png
+*.tgz

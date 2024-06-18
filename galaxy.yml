@@ -1,0 +1,41 @@
+---
+### REQUIRED
+namespace: mozebaltyk
+name: okub
+version: 1.0.0
+
+readme: README.md
+
+authors:
+  - morze.baltyk@proton.me
+
+### OPTIONAL but strongly recommended
+description: >
+  Collection to deploy OKD on diverse providers
+
+license:
+  - Apache-2.0
+
+tags:
+  - devops
+  - collection
+  - ansible
+
+dependencies: {}
+
+repository: https://github.com/mozebaltyk/Okub
+documentation: https://github.com/mozebaltyk/Okub/README.md
+homepage: https://github.com/mozebaltyk/Okub
+issues: https://github.com/mozebaltyk/Okub/issues
+
+build_ignore:
+  - .gitignore
+  - '.*.swp'
+  - .govmomi
+  - '.terraform*'
+  - 'terraform.tfstate*'
+  - .DS_Store
+  - .vscode
+  - '.*.tar.gz'
+  - '*.zip'
+  - 'tests'
