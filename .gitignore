@@ -1,17 +1,13 @@
-# tmp/state/secrets
+# tmp
 .*.swp
 .govmomi
-.terraform*
-terraform.tfstate*
-.venv/
-*kubeconfig.yaml
-Chart.lock
 # Workstation
 .DS_Store
 .vscode
 # loaded images
 **/roles/**/files/images/*
 images
+context
 # Galaxy artifacts.
 *.tar.gz
 *.zip
@@ -19,3 +15,18 @@ images
 *.log
 *.png
 *.tgz
+# Staging
+*kubeconfig.yaml
+*terraform*
+node_modules
+package*.json
+*.tfstate
+hosts.ini
+.key*
+Chart.lock
+.venv/
+__pycache__
+.pytest_cache
+AWS
+.tf.plan
+.pull-secret.txt
