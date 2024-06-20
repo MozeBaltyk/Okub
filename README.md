@@ -1,60 +1,62 @@
 <h1 style="text-align: center;"><code> Ansible Collection - mozebaltyk.Okub  </code></h1>
 
-Collection to deploy OKD on diverse providers
+Collection to deploy OKD/OCP on baremetal
 
 [![Releases](https://img.shields.io/github/release/mozebaltyk/Okub)](https://github.com/mozebaltyk/Okub/releases)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0/)
 
-## Check List
-- Fill up this Readme
-- Do a makefile or a justfile (pretty usefull for github/workflows or gitlab-ci)
-- Update the version of this collection in galaxy.yml 
-- Complete the changelog.md
-- Put all dependencies to use this collection in deps/bindeps.txt, deps/requirements.yml, deps/requirements.txt, deps/arkade.txt and deps/images.txt
-- when I do a "make prerequis", it should load all the dependencies (used for the build of the container)
-- Release your version in github
+## Description and Prerequisites
 
-## Description
+This Project provides CLI tools to help OKD/OCP deployment with a special focus on baremetal.
 
-This Project have for goal to deploy a Example APP using IAC (Infrastructure as Code)
+1. Type of Architecture
 
-**IMPORTANT:**  if your collections contain binaries list the version of those binaires in each version of your collection. 
+| Topology                     | Number of control plane nodes | Number of compute nodes | vCPU         | Memory          | Storage |
+|------------------------------|-------------------------------|-------------------------|--------------|-----------------|---------|
+| Single-node cluster          | 1                             | 0                       | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
+| Single-node cluster extended | 1                             | 1 or above              | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
+| Compact cluster              | 3                             | 0 or 1                  | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
+| HA cluster                   | 3                             | 2 and above             | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
 
-Version namespace-example-1.0.0.tar.gz: 
-- Cassandra 3.8.12
-- Mariadb  10.9.3
+Add to above list, an *helper node* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry)
 
-## Prerequisites
+2. Diverse installation method
 
-Linux Host as Installer (can be a VM or your WSL) with following tools:
-- Git
-- make (by default installed on most Linux distributions)
-- Packer
-- Terraform
-- Ansible-core 2.12.0
+We should normally count a bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node.    
+
+The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`.     
+
+The **Agent-based Installer** will require an extra config to setup the *rendezvousIP*.   
+
+Take also into account in the `install-config.yaml` the platform arguments which allow 3 values: `none`, `baremetal` and `vsphere`.     
+
+none:
+
+- DNS for `*.api.<domain>` and `apps.<domain>`
+
+- DNS and reverse DNS for all masters and workers
+
+- Loadbalancer for 6443 and 22623
+
+baremetal:
+
+- DNS for `*.api.<domain>` and `apps.<domain>`
+
+- DHCP services to provide IP addresses to nodes during installation.
+
+- PXE booting capability for nodes to load the initial installe
+
+3. Diverse Installer Outcome
+
+- an bootable iso to burn on USB stick
+
+- pxe boot to push on *helper server* or any other *pxe server*
 
 ## Getting started
 
 1. Clone this project
 ```sh
 git clone https://github.com/Namespace/example.git 
-```
-
-2. Define your inventory respecting the template in ./plugins/inventory/hosts.yml
-   NotaBene: you can change it directly in ./plugins/inventory/hosts.yml or give your own custom inventory!
-
-```sh
-# You can check your inventory with:
-ansible-inventory --graph EXAMPLE
-ansible-inventory --graph INSTANCE01
-```
-
-3. Kustomize your variables inside ./playbooks/vars/main.yml or in the inventory's group_vars.
-
-4. Use it
-```sh
-make          # Give the command available
-make help     # Give a more details about options available
 ```
 
 ## Roadmap
