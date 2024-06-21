@@ -11,15 +11,35 @@ _help:
     @printf "\n"
     @just --list --unsorted
     @printf "\n"
-    @printf "DEFAULT VARIABLES\n"
-    @printf "     PRODUCT = {{ PRODUCT }}\n"
-    @printf "     RELEASE_VERSION = {{RELEASE_VERSION}}\n"
-    @printf "     OKUB_INSTALL_PATH = {{ OKUB_INSTALL_PATH }}\n"
-    @printf "     DOMAIN = {{ DOMAIN }}\n"
-    @printf "     CLUSTER_NAME = {{ CLUSTER_NAME }}\n"
-    @printf "     MASTERS = {{ MASTERS }}\n"
-    @printf "     WORKERS = {{ WORKERS }}\n"
+    @printf "MANDATORY VARIABLES\n"
+    @printf "     PRODUCT = okd\n"
+    @printf "     RELEASE_VERSION = latest\n"
+    @printf "     OKUB_INSTALL_PATH = $HOME/okd-latest\n"
+    @printf "     DOMAIN = example.com\n"
+    @printf "     CLUSTER_NAME = okub\n"
+    @printf "     MASTERS = 1\n"
+    @printf "     WORKERS = 0\n"
+    @printf "     DHCP_BOOL = FALSE\n"
     @printf "\n"
+    @printf "VARIABLE NEEDED FOR \"just init pxe\"\n"
+    @printf "     PXE_SERVER = hostname -i\n"
+    @printf "\n"
+    @printf "VARIABLE NEEDED WHEN 3 MASTERS\n"
+    @printf "     RENDEZVOUS_IP = hostname -i\n"
+    @printf "\n"
+    @printf "VARIABLE NEEDED WHEN DHCP is FALSE (STATIC NETWORK)\n"
+    @printf "     MACADRESS_MASTERS = \"00:ef:44:21:e6:m1 00:ef:44:21:e6:m2 00:ef:44:21:e6:m3\"\n"
+    @printf "     MACADRESS_WORKERS = \"00:ef:44:21:e6:w1 00:ef:44:21:e6:w2\"\n"
+    @printf "     IP_MASTERS = \"xx.xx.xx.x1 xx.xx.xx.x2 xx.xx.xx.x3\"\n"
+    @printf "     IP_WORKERS = \"xx.xx.xx.x4 xx.xx.xx.x5\"\n"
+    @printf "     DNS_SERVER = \"8.8.8.8\"\n"
+    @printf "\n"
+    @printf "DESCRIPTION\n"
+    @printf "     This script sets up the environment for OKD/OCP installations.\n"
+    @printf "     Customize the behavior by exporting environment variables before\n"
+    @printf "     running the 'just' command.\n"
+    @printf "\n"
+
 
 # Install helping services to make OKD or OCP install possible
 helper METHOD:
@@ -34,10 +54,12 @@ init OUTCOME:
     @just -f scripts/okub/init.justfile binaries
     @just -f scripts/okub/init.justfile keys
     @just -f scripts/okub/init.justfile install-config
-    @just -f scripts/okub/init.justfile update
+    @just -f scripts/okub/init.justfile agent-config
+    @just -f scripts/okub/init.justfile update-install-config
+    @just -f scripts/okub/init.justfile update-agent-config
     @just -f scripts/okub/init.justfile manifest
     @just -f scripts/okub/init.justfile {{OUTCOME}}
 
 # Add a worker to an existing cluster 
-add:
+add OUTCOME:
     @just -f scripts/okub/add.justfile 

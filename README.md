@@ -30,19 +30,19 @@ The **Agent-based Installer** will require an extra `agent-config.yaml` to setup
 
 Take also into account in the `install-config.yaml` the platform arguments which allow 3 values: `none`, `baremetal` and `vsphere`.     
 
-3. Diverse plateform option
+3. plateform options 
 
-none (for **single-node installer** the only possible option):
+**Agent-based Installer** support only those 3 options below:
 
-- DNS for `*.api.<domain>` and `apps.<domain>`
+- *none*, for **single-node installer** the only possible option but work also for baremetal and all raw install.
 
-- DNS and reverse DNS for all masters and workers
+- *baremetal*, needed for hardware with BMC or for configuring dual stacks network.
 
-- Loadbalancer for 6443 and 22623
+- *vsphere*, does not concern us since this project focus mainly on baremetal.
 
-- [Futher documentation](https://docs.openshift.com/container-platform/4.14/installing/installing_with_agent_based_installer/preparing-to-install-with-agent-based-installer.html#installation-requirements-platform-none_preparing-to-install-with-agent-based-installer)
+4. Diverse Helper Setup
 
-baremetal (used for hardware with BMC or for dual stack):
+First setup:
 
 - DNS for `*.api.<domain>` and `apps.<domain>`
 
@@ -50,7 +50,15 @@ baremetal (used for hardware with BMC or for dual stack):
 
 - PXE booting capability for nodes to load the initial install
 
-4. Diverse Installer Outcome
+Second setup:
+
+- DNS for `*.api.<domain>` and `apps.<domain>`
+
+- DNS and reverse DNS for all masters and workers
+
+- Loadbalancer for 6443 and 22623
+
+5. Diverse Installer Outcome
 
 - an bootable iso to burn on USB stick
 
