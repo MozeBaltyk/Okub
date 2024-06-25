@@ -25,6 +25,7 @@ _help:
     @printf "VARIABLE NEEDED WHEN LB is FALSE\n"
     @printf "     APIVIP = \"192.168.10.10\"\n"
     @printf "     INGRESSVIP = \"192.168.10.11\"\n"
+    @printf "     MACHINENETWORK = \"192.168.10.0/24\"\n"
     @printf "\n"
     @printf "VARIABLE NEEDED WHEN INTERNAL REGISTRY\n"
     @printf "     INTERNAL_REGISTRY = <URL:PORT>\n"
@@ -52,15 +53,15 @@ _help:
 
 
 # Install helping services to make OKD or OCP install possible
-helper METHOD:
-    @just -f scripts/okub/helper.justfile {{ METHOD }}
+helper SUPPORT:
+    @just -f scripts/okub/helper.justfile {{ SUPPORT }}
 
 # Divers pre-checks 
 check THAT:
     @just -f scripts/okub/checks.justfile {{ THAT }}
 
-# Initiate and produce iso for OKD or OCP install ["iso"|"pxe"]
-init OUTCOME:
+# Initiate and produce iso or pxeboot for OKD or OCP install ["iso"|"pxe"|""]
+init *OUTCOME:
     @just -f scripts/okub/init.justfile binaries
     @just -f scripts/okub/init.justfile keys
     @just -f scripts/okub/init.justfile install-config
@@ -68,9 +69,14 @@ init OUTCOME:
     @just -f scripts/okub/init.justfile platform
     @just -f scripts/okub/init.justfile update-install-config
     @just -f scripts/okub/init.justfile update-agent-config
+    @just -f scripts/okub/init.justfile saved
     @just -f scripts/okub/init.justfile manifest
-    @just -f scripts/okub/init.justfile {{OUTCOME}}
+    @if [[ "{{OUTCOME}}" != "" ]]; then just -f scripts/okub/init.justfile {{OUTCOME}}; fi
 
-# Add a worker to an existing cluster 
+# Watch and Wait for OKD/OCP install to complete at the wanted log LEVEL (default: info) 
+wait LEVEL="info":
+    @just -f scripts/okub/init.justfile wait {{LEVEL}}
+
+# Add a worker to an existing cluster
 add OUTCOME:
     @just -f scripts/okub/add.justfile

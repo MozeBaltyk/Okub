@@ -348,13 +348,18 @@ platform:
       fi
     fi
 
+# Save install-config and agent-config
+saved:
+    #!/usr/bin/env bash
+    set -e
+    mkdir -p {{OKUB_INSTALL_PATH}}/saved
+    [ -f {{OKUB_INSTALL_PATH}}/install-config.yaml ] && cp {{OKUB_INSTALL_PATH}}/install-config.yaml {{OKUB_INSTALL_PATH}}/saved/install-config.yaml
+    [ -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ] && cp {{OKUB_INSTALL_PATH}}/agent-config.yaml {{OKUB_INSTALL_PATH}}/saved/agent-config.yaml
+
 # Generate manifest
 manifest:
     #!/usr/bin/env bash
     set -e
-    # Saving install-config anyway
-    cp {{OKUB_INSTALL_PATH}}/install-config.yaml {{OKUB_INSTALL_PATH}}/install-config-saved.yaml
-
     if [ ! -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ]; then    
       # Manifest
       {{OKUB_INSTALL_PATH}}/bin/openshift-install create manifests --dir {{OKUB_INSTALL_PATH}}
@@ -372,6 +377,8 @@ manifest:
 iso:
     #!/usr/bin/env bash
     set -e
+    printf "\e[1;34m[INFO]\e[m Generate iso.\n";
+
     if [ -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ]; then
       # Agent Based
       {{OKUB_INSTALL_PATH}}/bin/openshift-install agent create image --dir {{OKUB_INSTALL_PATH}}
@@ -396,6 +403,8 @@ iso:
 pxe:
     #!/usr/bin/env bash
     set -e
+    printf "\e[1;34m[INFO]\e[m Generate PXE boot files\n";
+
     if [ -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ]; then
         # Agent Based 
         {{OKUB_INSTALL_PATH}}/bin/openshift-install agent create pxe-files --dir {{OKUB_INSTALL_PATH}}
@@ -443,3 +452,16 @@ pxe:
 
     fi
     printf "\e[1;32m[OK]\e[m PXE config generated and iso downloaded.\n"
+
+# Watch and Wait for OKD/OCP install to complete
+wait level:
+    #!/usr/bin/env bash
+    set -e
+    if [ -f {{OKUB_INSTALL_PATH}}/agent.x86_64.iso ]; then
+       # Agent based install
+      {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} agent wait-for bootstrap-complete --log-level={{level}}
+      {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} agent wait-for install-complete --log-level={{level}}
+    else
+       # SNO and other type of install 
+       {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for install-complete --log-level={{level}}
+    fi
