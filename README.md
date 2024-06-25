@@ -24,39 +24,53 @@ Add to above list, an *helper node* to provide following services: DNS / DHCP / 
 
 We should normally count a bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node.    
 
-The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This method does not have any reason to exist since it's included in the **Agent-based Installer** from version OCP 4.15. The only advantage of this method is you do not need a *rendezvousIP* and the install is completed as *bootstrap-in-place*.   
+The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This method does not have any reason to exist anymore since it's included in the **Agent-based Installer** but the only advantage is you do not need a *rendezvousIP* and the install is completed as *bootstrap-in-place*.   
 
-The **Agent-based Installer** will require an extra `agent-config.yaml` to setup the *rendezvousIP* which in case of DHCP, an IP address of one of the control plane. In an environment without a DHCP server, you can define IP addresses statically.
+The **Agent-based Installer** will require an extra `agent-config.yaml` to setup the *rendezvousIP* which in case of DHCP will be the one of the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method cseems to work for OKD even though is not present in documentation.
 
 Take also into account in the `install-config.yaml` the platform arguments which allow 3 values: `none`, `baremetal` and `vsphere`.     
 
-3. plateform options 
+3. plateform options
 
-**Agent-based Installer** support only those 3 options below:
+**Agent-based Installer** support only those 3 plateforms options below:
 
-- *none*, for **single-node installer** the only possible option but work also for baremetal and all raw install.
+- *none*, the only possible option for **single-node installer** but works also on all raw install (like for a baremetal without BMC).
 
-- *baremetal*, needed for hardware with BMC or for configuring dual stacks network.
+   Requirements for *plateform: none{}*:
+
+      - `networkType: OVNKubernetes`
+
+      - DNS for `*.api.<domain>` and `apps.<domain>`
+
+      - DNS and reverse DNS (PTR) for all masters and workers is required
+
+      - DHCP services to provide IP addresses to nodes during installation.
+
+      - Loadbalancer for 6443 and 22623 ( since `apiVIPs` and `ingressVIPs` are not defined in *none* block )
+
+- *baremetal*, for hardware with BMC or for configuring dual stacks network.
+
+   Requirements for *plateform: baremetal{}*:
+
+      - if `apiVIPs` and `ingressVIPs` are defined, no need for loadbalancing
+
+      - if static IP defined then no DHCP
+
+      - if Outcome iso - no PXE boot server
+
+      - only DNS for `*.api.<domain>` and `apps.<domain>` is required
 
 - *vsphere*, does not concern us since this project focus mainly on baremetal.
 
-4. Diverse Helper Setup
+4. Diverse Helper are present in script to meet requirement above:
 
-First setup:
+- DNS = Bind server.
 
-- DNS for `*.api.<domain>` and `apps.<domain>`
+- DHCP = DHCP server.
 
-- DHCP services to provide IP addresses to nodes during installation. ()
+- PXE server = HTTPD server.
 
-- PXE booting capability for nodes to load the initial install
-
-Second setup:
-
-- DNS for `*.api.<domain>` and `apps.<domain>`
-
-- DNS and reverse DNS for all masters and workers
-
-- Loadbalancer for 6443 and 22623
+- Loadbalancer = HAproxy server.
 
 5. Diverse Installer Outcome
 
@@ -70,6 +84,25 @@ Second setup:
 ```sh
 git clone https://github.com/Namespace/example.git 
 ```
+
+## References
+
+* Baremetal
+
+https://github.com/ryanhay/ocp4-metal-install/tree/master
+
+* Agent-based
+
+https://www.redhat.com/en/blog/meet-the-new-agent-based-openshift-installer-1
+
+https://kapilrajyaguru.medium.com/agent-based-red-hat-openshift-cluster-install-ee33d3b9fe0e
+
+https://docs.openshift.com/container-platform/4.14/installing/installing_with_agent_based_installer/preparing-to-install-with-agent-based-installer.html#static-networking
+
+* Vsphere
+
+https://guifreelife.com/blog/2022/05/13/OpenShift-Virtualization-on-vSphere/
+
 
 ## Roadmap
 milestones:
