@@ -30,3 +30,5 @@ __pycache__
 AWS
 .tf.plan
 .pull-secret.txt
+# Staging
+venv
