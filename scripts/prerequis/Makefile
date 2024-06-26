@@ -9,16 +9,11 @@ endif
 
 .PHONY: all
 ## all prerequisites (keep the phony order)
-all: pythons bindeps collections arkade images
+all: pythons bindeps collections arkade
 
 .PHONY: docker-builder
 ## all prerequisites for a docker container (keep the phony order)
 docker-builder: pythons bindeps collections arkade
-
-.PHONY: images
-## Load images in files directories of each roles (since too big, those are in the .gitignore)
-images:
-	./podman-load.sh
 
 .PHONY: arkade
 ## Install admin kubernetes commands

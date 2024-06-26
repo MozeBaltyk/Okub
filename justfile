@@ -51,6 +51,9 @@ _help:
     @printf "     running the 'just' command.\n"
     @printf "\n"
 
+# Install all prerequisites for this projects ["all"|"collections"|"pythons"|"bindeps"|"arkade"].
+prerequisites TYPE="all":
+    @just -f scripts/prerequis/install.justfile {{ TYPE }}
 
 # Install helping services to make OKD or OCP install possible
 helper SUPPORT:
@@ -80,3 +83,12 @@ wait LEVEL="info":
 # Add a worker to an existing cluster
 add OUTCOME:
     @just -f scripts/okub/add.justfile
+
+# Mirror containers from a namespace ACTION=["create"|"upload"]
+mirror_ns NAMESPACE STOREPATH="/tmp":
+    @just _oc_mirror_availability
+    @just -f scripts/mirror/oc_mirror.justfile from_ns {{NAMESPACE}} {{STOREPATH}}
+
+# Upload in registry an OC archive (give full path to package)
+mirror_upload REGISTRY ORG PACKAGE:
+    @just -f scripts/mirror/oc_mirror.justfile upload {{REGISTRY}} {{ORG}} {{PACKAGE}}

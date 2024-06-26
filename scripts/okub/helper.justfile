@@ -13,12 +13,22 @@ DNS:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m Install and configure a DNS.\n";
+    dnf install bind bind-utils -y
+    # Push config
+    firewall-cmd --add-port=53/udp --zone=internal --permanent
+    # for OCP 4.9 and later 53/tcp is required
+    firewall-cmd --add-port=53/tcp --zone=internal --permanent
+    firewall-cmd --reload
+    systemctl enable named
+    systemctl start named
+    systemctl status named
 
 # Install and configure a DHCP
 DHCP:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m Install and configure a DHCP.\n";
+    dnf install dhcp-server -y
 
 # Install and configure a HAproxy for Loadbalancing
 HAPROXY:
