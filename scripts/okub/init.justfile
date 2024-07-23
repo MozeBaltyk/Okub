@@ -171,7 +171,7 @@ update-install-config:
 
     # SNO - Single Node install
     if [[ {{ MASTERS }} -eq 1 && {{ WORKERS }} -eq 0 ]]; then 
-      SNO=true;
+      SNO=TRUE;
       yq -i '.bootstrapInPlace.installationDisk = "/dev/sda"' {{OKUB_INSTALL_PATH}}/install-config.yaml;
     fi
 
@@ -310,7 +310,10 @@ update-agent-config:
 # Set Platform
 platform:
     #!/usr/bin/env bash
-    if [[ {{ LB_BOOL }} == "FALSE" ]]; then
+    # SNO - Single Node install
+    if [[ {{ MASTERS }} -eq 1 && {{ WORKERS }} -eq 0 ]]; then SNO="TRUE"; else SNO="FALSE"; fi
+
+    if [[ {{ LB_BOOL }} == "FALSE" && ${SNO} != "TRUE" ]]; then
       printf "\e[1;33m[CHANGE]\e[m Update install-config with baremetal plateform config\n";
       yq -i 'del(.platform.none) | .platform.baremetal = {}' {{OKUB_INSTALL_PATH}}/install-config.yaml
       yq -i '.platform.baremetal.apiVIPs = [ "{{ APIVIP }}" ]' {{OKUB_INSTALL_PATH}}/install-config.yaml
@@ -351,10 +354,9 @@ platform:
 # Save install-config and agent-config
 saved:
     #!/usr/bin/env bash
-    set -e
     mkdir -p {{OKUB_INSTALL_PATH}}/saved
-    [ -f {{OKUB_INSTALL_PATH}}/install-config.yaml ] && cp {{OKUB_INSTALL_PATH}}/install-config.yaml {{OKUB_INSTALL_PATH}}/saved/install-config.yaml
-    [ -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ] && cp {{OKUB_INSTALL_PATH}}/agent-config.yaml {{OKUB_INSTALL_PATH}}/saved/agent-config.yaml
+    [ -f {{OKUB_INSTALL_PATH}}/install-config.yaml ] && cp {{OKUB_INSTALL_PATH}}/install-config.yaml {{OKUB_INSTALL_PATH}}/saved/install-config.yaml || echo "no install-config.yaml to be saved"
+    [ -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ] && cp {{OKUB_INSTALL_PATH}}/agent-config.yaml {{OKUB_INSTALL_PATH}}/saved/agent-config.yaml || echo "no agent-config.yaml to be saved"
 
 # Generate manifest
 manifest:
@@ -366,7 +368,7 @@ manifest:
 
       # Ignition
       if [[ {{ MASTERS }} -eq 1 && {{ WORKERS }} -eq 0 ]]; then
-        SNO=true;
+        SNO=TRUE;
         {{OKUB_INSTALL_PATH}}/bin/openshift-install create single-node-ignition-config --dir {{OKUB_INSTALL_PATH}}
       else
         {{OKUB_INSTALL_PATH}}/bin/openshift-install create ignition-configs --dir {{OKUB_INSTALL_PATH}}
