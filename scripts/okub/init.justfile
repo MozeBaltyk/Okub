@@ -160,7 +160,11 @@ update-install-config:
     #!/usr/bin/env bash
     printf "\e[1;33m[CHANGE]\e[m Update install-config:\n";
     export SSH_KEY=$(cat {{OKUB_INSTALL_PATH}}/.ssh/id_rsa.pub)
-    export PULLSECRET="'$(jq '{ "auths": { "quay.io": .auths["quay.io"], "cloud.openshift.com": .auths["cloud.openshift.com"], "registry.redhat.io": .auths["registry.redhat.io"], "registry.connect.redhat.com": .auths["registry.connect.redhat.com"] }}' $HOME/.docker/config.json | jq -c .)'"
+    if [ ! -z {{ INTERNAL_REGISTRY }} ]; then
+      export PULLSECRET="'$(jq '{ "auths": { "{{ INTERNAL_REGISTRY }}": .auths["{{ INTERNAL_REGISTRY }}"], "quay.io": .auths["quay.io"], "cloud.openshift.com": .auths["cloud.openshift.com"], "registry.redhat.io": .auths["registry.redhat.io"], "registry.connect.redhat.com": .auths["registry.connect.redhat.com"] }}' $HOME/.docker/config.json | jq -c .)'"      
+    else
+      export PULLSECRET="'$(jq '{ "auths": { "quay.io": .auths["quay.io"], "cloud.openshift.com": .auths["cloud.openshift.com"], "registry.redhat.io": .auths["registry.redhat.io"], "registry.connect.redhat.com": .auths["registry.connect.redhat.com"] }}' $HOME/.docker/config.json | jq -c .)'"
+    fi
     # install-config.yaml
     yq -i '.baseDomain = "{{ DOMAIN }}"' {{OKUB_INSTALL_PATH}}/install-config.yaml
     yq -i '.metadata.name = "{{ CLUSTER_NAME }}"' {{OKUB_INSTALL_PATH}}/install-config.yaml
@@ -178,7 +182,7 @@ update-install-config:
     # Internal Registry
     if [ ! -z {{ INTERNAL_REGISTRY }} ]; then
       printf "\e[1;34m[INFO]\e[m Get CA from internal registry:\n";
-      REGISTRY_CA=$(openssl s_client -showcerts -connect {{ INTERNAL_REGISTRY }} </dev/null 2>/dev/null|openssl x509 -outform PEM > ca.crt)
+      export REGISTRY_CA=$(openssl s_client -showcerts -connect {{ INTERNAL_REGISTRY }} </dev/null 2>/dev/null|openssl x509 -outform PEM)
       printf "\e[1;33m[CHANGE]\e[m Update install-config with internal registry:\n";
     cat >> "{{OKUB_INSTALL_PATH}}/install-config.yaml" <<EOF
     imageContentSources:
@@ -188,9 +192,8 @@ update-install-config:
     - mirrors:
       - {{ INTERNAL_REGISTRY }}/ocp4/openshift4
       source: quay.io/openshift-release-dev/ocp-release
-    additionalTrustBundle: |
-    ${REGISTRY_CA}
     EOF
+    yq -i '.additionalTrustBundle = strenv(REGISTRY_CA)' {{OKUB_INSTALL_PATH}}/install-config.yaml;
     fi
 
 # Update agent-config.yaml
