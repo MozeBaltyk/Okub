@@ -63,7 +63,7 @@ helper SUPPORT:
 check THAT:
     @just -f scripts/okub/checks.justfile {{ THAT }}
 
-# Initiate and produce iso or pxeboot for OKD or OCP install ["iso"|"pxe"|""]
+# Generate Manifest and produce iso or pxeboot for OKD or OCP install ["iso"|"pxe"|""]
 init *OUTCOME:
     @just -f scripts/okub/init.justfile binaries
     @just -f scripts/okub/init.justfile keys

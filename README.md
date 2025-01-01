@@ -26,7 +26,7 @@ We should normally count a bootstrap node, but with **Single-node installer** an
 
 The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This method does not have any reason to exist anymore since it's included in the **Agent-based Installer** but the only advantage is you do not need a *rendezvousIP* and the install is completed as *bootstrap-in-place*.   
 
-The **Agent-based Installer** will require an extra `agent-config.yaml` to setup the *rendezvousIP* which in case of DHCP will be the one of the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method cseems to work for OKD even though is not present in documentation.
+The **Agent-based Installer** will require an extra `agent-config.yaml` to setup the *rendezvousIP* which in case of DHCP will be the one of the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method seems to work for OKD even though is not present in documentation.
 
 Take also into account in the `install-config.yaml` the platform arguments which allow 3 values: `none`, `baremetal` and `vsphere`.     
 

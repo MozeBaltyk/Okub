@@ -150,7 +150,7 @@ agent-config:
     apiVersion: v1alpha1
     kind: AgentConfig
     metadata:
-      name: sno-cluster
+      name: ocp-cluster
     rendezvousIP: 192.168.111.80
     EOF
     fi
