@@ -9,7 +9,7 @@ Collection to deploy OKD/OCP on baremetal
 
 This Project provides CLI tools to help OKD/OCP deployment with a special focus on baremetal.
 
-1. Type of Architecture
+1. Type of Architecture and Requirements
 
 | Topology                     | Number of control plane nodes | Number of compute nodes | vCPU         | Memory          | Storage |
 |------------------------------|-------------------------------|-------------------------|--------------|-----------------|---------|
@@ -40,19 +40,19 @@ Take also into account in the `install-config.yaml` the platform arguments which
 
       - `networkType: OVNKubernetes`
 
-      - DNS for `*.api.<domain>` and `apps.<domain>`
+      - DNS for `*.api.<domain>` and `apps.<domain>` pointing to the Loadbalancer.
 
       - DNS and reverse DNS (PTR) for all masters and workers is required
 
       - DHCP services to provide IP addresses to nodes during installation.
 
-      - Loadbalancer for 6443 and 22623 ( since `apiVIPs` and `ingressVIPs` are not defined in *none* block )
+      - Loadbalancer for 6443 and 22623 if not standalone install ( since `apiVIPs` and `ingressVIPs` are not defined in *none* block )
 
 - *baremetal*, for hardware with BMC or for configuring dual stacks network.
 
    Requirements for *plateform: baremetal{}*:
 
-      - if `apiVIPs` and `ingressVIPs` are defined, no need for loadbalancing
+      - if `apiVIPs` and `ingressVIPs` are defined in the config, no need for loadbalancing
 
       - if static IP defined then no DHCP
 
@@ -82,7 +82,7 @@ Take also into account in the `install-config.yaml` the platform arguments which
 
 1. Clone this project
 ```sh
-git clone https://github.com/Namespace/example.git 
+git clone https://github.com/mozebaltyk/Okub.git
 ```
 
 ## References
@@ -98,6 +98,12 @@ https://www.redhat.com/en/blog/meet-the-new-agent-based-openshift-installer-1
 https://kapilrajyaguru.medium.com/agent-based-red-hat-openshift-cluster-install-ee33d3b9fe0e
 
 https://docs.openshift.com/container-platform/4.14/installing/installing_with_agent_based_installer/preparing-to-install-with-agent-based-installer.html#static-networking
+
+https://github.com/cgruver/kamarotos/blob/main/agent-install.md
+
+* KVM
+
+https://github.com/jmutai/ocp4_ansible
 
 * Vsphere
 
