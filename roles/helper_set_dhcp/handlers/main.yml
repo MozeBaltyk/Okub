@@ -1,2 +1,7 @@
 ---
 # handlers file for helper_set_dhcp
+
+- name: restart dhcpd
+  ansible.builtin.service:
+    name: dhcpd
+    state: restarted

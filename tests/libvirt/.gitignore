@@ -1,0 +1,6 @@
+# Staging
+*kubeconfig.yaml
+*terraform*
+*.tfstate
+hosts.ini
+.key*
