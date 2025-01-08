@@ -4,7 +4,6 @@
   connection: local
   gather_facts: yes
   become: true
-  vars_files: ../vars/main.yml
 
   tasks:
     - name: install packages
@@ -14,5 +13,4 @@
           - tar
           - unzip
           - python3-pip
-          - git
           - htop

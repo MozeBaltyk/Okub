@@ -1,6 +1,7 @@
 // variables that can be overriden
 ## variable "qcow2_image" { default = "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Server/x86_64/images/Fedora-Server-KVM-41-1.4.x86_64.qcow2" }
-variable "qcow2_image" { default = "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2" }
+## variable "qcow2_image" { default = "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2" }
+variable "qcow2_image" { default = "https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" }
 variable "hostname" { default = "test" }
 variable "pool" { default = "default" }
 variable "domain" { default = "ocp4.local" }
