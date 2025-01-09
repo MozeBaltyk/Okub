@@ -27,7 +27,7 @@ resource "libvirt_network" "network" {
 }
 
 data "template_file" "user_data" {
-  template = file("${path.module}/cloud_init.cfg")
+  template = file("${path.module}/${var.cloud-init_version}/cloud_init.cfg")
   vars = {
     hostname   = var.hostname
     fqdn       = "${var.hostname}.${var.domain}"
@@ -49,7 +49,7 @@ data "template_cloudinit_config" "config" {
 }
 
 data "template_file" "network_config" {
-  template = file("${path.module}/network_config_${var.ip_type}.cfg")
+  template = file("${path.module}/${var.cloud-init_version}/network_config_${var.ip_type}.cfg")
 }
 
 // Create the machine
@@ -85,10 +85,6 @@ resource "libvirt_domain" "domain-alma" {
     listen_type = "address"
     autoport    = "true"
   }
-
-  #provisioner "local-exec" {
-  #  command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ansible -i ${self.network_interface.0.addresses.0}, --private-key ${path.module}/.key.private ../../playbooks/tasks/provision.yml"
-  #}
 
 }
 

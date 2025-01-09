@@ -32,3 +32,4 @@ AWS
 .pull-secret.txt
 # Staging
 venv
+.venv
