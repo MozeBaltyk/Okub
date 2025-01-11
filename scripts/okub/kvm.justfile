@@ -21,7 +21,7 @@ kvm_config:
     sudo systemctl restart libvirtd
 
 # Create a VM from qcow2 (default latest Fedora)
-kvm_create_VM:
+create:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m Generate a MAC address.\n";
@@ -38,7 +38,7 @@ kvm_create_VM:
     cd ../../tests/libvirt && tofu refresh && tofu output ips;
 
 # Destroy VM from qcow2
-kvm_destroy_VM:
+destroy:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m Destroy a VM from KVM\n";

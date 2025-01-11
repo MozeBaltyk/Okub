@@ -1,12 +1,6 @@
-// variables that can be overriden
-## variable "qcow2_image" { default = "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Server/x86_64/images/Fedora-Server-KVM-41-1.4.x86_64.qcow2" }
-## variable "qcow2_image" { default = "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2" }
-# variable "qcow2_image" { default = "https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2" }
-# variable "cloud-init_version" { default = "24.4" }
-
 # Selecting version
 variable "selected_version" {
-  default = "fedora41"  # You can change this as needed to "fedora41"
+  default = "fedora40"  # You can change this as needed to "fedora41"
 }
 
 # Mapping
@@ -24,7 +18,7 @@ variable "Versionning" {
       os_version_short = 40
       os_version_long = "40.1.14"
       os_URL= "https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
-      cloud-init_version = 23.3
+      cloud-init_version = 23.4
     }
     fedora41 = {
       os_name = "fedora"
@@ -36,12 +30,13 @@ variable "Versionning" {
   }
 }
 
-variable "qcow2_image" {
-  default = lookup(var.Versionning[var.selected_version], "os_URL", "")
+# Set locally
+locals {
+  qcow2_image = lookup(var.Versionning[var.selected_version], "os_URL", "")
 }
 
-variable "cloud-init_version" {
-  default = lookup(var.Versionning[var.selected_version], "cloud_init_version", 0)
+locals {
+  cloud_init_version = lookup(var.Versionning[var.selected_version], "cloud-init_version", 0)
 }
 
 # To be set

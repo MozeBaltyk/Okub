@@ -2,7 +2,7 @@
 resource "libvirt_volume" "os_image" {
   name   = "${var.hostname}-os_image"
   pool   = "${var.pool}"
-  source = "${var.qcow2_image}"
+  source = "${local.qcow2_image}"
   format = "qcow2"
 }
 
@@ -27,7 +27,7 @@ resource "libvirt_network" "network" {
 }
 
 data "template_file" "user_data" {
-  template = file("${path.module}/${var.cloud-init_version}/cloud_init.cfg")
+  template = file("${path.module}/${local.cloud_init_version}/cloud_init.cfg")
   vars = {
     hostname   = var.hostname
     fqdn       = "${var.hostname}.${var.domain}"
@@ -49,7 +49,7 @@ data "template_cloudinit_config" "config" {
 }
 
 data "template_file" "network_config" {
-  template = file("${path.module}/${var.cloud-init_version}/network_config_${var.ip_type}.cfg")
+  template = file("${path.module}/${local.cloud_init_version}/network_config_${var.ip_type}.cfg")
 }
 
 // Create the machine

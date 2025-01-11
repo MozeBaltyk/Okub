@@ -55,6 +55,10 @@ _help:
 prerequisites TYPE="all":
     @just -f scripts/prerequis/install.justfile {{ TYPE }}
 
+# Create a VM from qcow2 (default latest Fedora)
+vm ACTION="create":
+    @just -f scripts/okub/kvm.justfile {{ ACTION }}
+
 # Install helping services to make OKD or OCP install possible
 helper SUPPORT:
     @just -f scripts/okub/helper.justfile {{ SUPPORT }}
