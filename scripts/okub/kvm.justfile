@@ -34,8 +34,8 @@ create:
       -var "hostname={{ hostname }}" \
       -var "mac_address=${MAC_ADDR}";
     cd ../../tests/libvirt && tofu apply "terraform.tfplan";
-    sleep 60
-    cd ../../tests/libvirt && tofu refresh && tofu output ips;
+   #sleep 60
+   #cd ../../tests/libvirt && tofu refresh && tofu output ips;
 
 # Destroy VM from qcow2
 destroy:

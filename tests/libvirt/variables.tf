@@ -3,7 +3,7 @@ variable "selected_version" {
   default = "fedora40"  # You can change this as needed to "fedora41"
 }
 
-# Mapping
+# Mapping Versions
 variable "Versionning" {
   type = map(object({
     os_name = string
@@ -39,13 +39,21 @@ locals {
   cloud_init_version = lookup(var.Versionning[var.selected_version], "cloud-init_version", 0)
 }
 
+locals {
+  subdomain = "${var.clusterid}.${var.domain}"
+}
+
 # To be set
-variable "hostname" { default = "test" }
+variable "hostname" { default = "bastion" }
 variable "pool" { default = "default" }
-variable "domain" { default = "ocp4.local" }
+variable "clusterid" { default = "ocp4" }
+variable "domain" { default = "local" }
 variable "ip_type" { default = "dhcp" } # dhcp is other valid type
 variable "network_name" { default = "openshift4" }
+variable "network_cidr" { default= "192.168.100.0/24" }
 variable "mac_address" { default = "52:54:00:36:14:e5" }
-variable "memoryMB" { default = 1024 * 2 }
-variable "cpu" { default = 1 }
+variable "memoryMB" { default = 1024 * 4 }
+variable "cpu" { default = 2 }
 variable "timezone" { default = "Europe/Paris" }
+variable "masters_number" { default = 3 }
+variable "workers_number" { default = 2 }

@@ -1,2 +1,58 @@
 ---
 # tasks file for helper_set_haproxy
+- name: Install haproxy
+  ansible.builtin.package:
+    name: haproxy
+    state: present
+
+- name: Create group
+  ansible.builtin.group:
+    name: haproxy
+    system: true
+    state: present
+
+- name: Create user
+  ansible.builtin.user:
+    name: haproxy
+    system: true
+    state: present
+
+- name: Configure software
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    mode: "0640"
+    backup: true
+  notify:
+    - Restart haproxy
+
+- name: Modify selinux settings
+  when:
+    - ansible_selinux.status is defined
+    - ansible_selinux.status == "enabled"
+  block:
+    - name: Add haproxy_stats_port to http_port_t selinux type
+      community.general.seport:
+        ports: "{{ haproxy_stats_port }}"
+        proto: tcp
+        setype: http_port_t
+        state: present
+      when:
+        - haproxy_stats_port is defined
+
+    - name: Allow haproxy to open any port
+      ansible.posix.seboolean:
+        name: haproxy_connect_any
+        state: true
+        persistent: true
+      notify:
+        - Reboot
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Start and enable haproxy
+  ansible.builtin.service:
+    name: haproxy
+    state: started
+    enabled: true

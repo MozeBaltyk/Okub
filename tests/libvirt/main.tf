@@ -19,19 +19,17 @@ resource "libvirt_network" "network" {
     mode      = "nat"
     bridge    = "virbr7"
     autostart = true
-    domain    = var.domain
-    addresses = ["192.168.100.0/24"]
-    dhcp {
-        enabled = true
-    }
+    domain    = local.subdomain
+    addresses = [var.network_cidr]
+    dhcp { enabled = true }
 }
 
 data "template_file" "user_data" {
   template = file("${path.module}/${local.cloud_init_version}/cloud_init.cfg")
   vars = {
     hostname   = var.hostname
-    fqdn       = "${var.hostname}.${var.domain}"
-    domain     = var.domain
+    fqdn       = "${var.hostname}.${local.subdomain}"
+    domain     = local.subdomain
     timezone   = var.timezone
     #public_key = file("${path.module}/.key.pub")
     public_key = tls_private_key.global_key.public_key_openssh
@@ -53,7 +51,7 @@ data "template_file" "network_config" {
 }
 
 // Create the machine
-resource "libvirt_domain" "domain-alma" {
+resource "libvirt_domain" "helper" {
   # domain name in libvirt, not hostname
   name       = var.hostname
   memory     = var.memoryMB
@@ -61,13 +59,12 @@ resource "libvirt_domain" "domain-alma" {
   autostart  = true
   qemu_agent = true
 
-
   disk {
     volume_id = libvirt_volume.os_image.id
   }
 
   network_interface {
-    network_name = var.network_name
+    network_id = libvirt_network.network.id
     mac          = var.mac_address
     wait_for_lease = true
   }
@@ -85,10 +82,4 @@ resource "libvirt_domain" "domain-alma" {
     listen_type = "address"
     autoport    = "true"
   }
-
-}
-
-output "ips" {
-  # show IP, run 'tofu refresh && tofu output ips' if not populated
-  value = libvirt_domain.domain-alma.*.network_interface.0.addresses
 }

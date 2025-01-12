@@ -1,5 +1,5 @@
 ---
-- name: Deploys VM based on cloud image
+- name: Provision Helper VM
   hosts: 127.0.0.1
   connection: local
   gather_facts: yes
@@ -13,4 +13,18 @@
           - tar
           - unzip
           - python3-pip
-          - htop
+          - vim
+          - wget
+          - curl
+          - bash-completion
+          - tree
+          - tar
+          - libselinux-python3
+          - firewalld
+
+  roles:
+    #- {role: helper_set_quayio, tags: quayio}
+    #- {role: helper_set_dns, tags: dns}
+    - {role: helper_set_haproxy, tags: haproxy}
+    #- {role: helper_set_dhcp, tags: dhcp}
+    #- {role: helper_set_pxe, tags: pxe}
