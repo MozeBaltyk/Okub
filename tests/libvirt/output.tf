@@ -8,7 +8,10 @@ resource "local_file" "ansible_inventory" {
       helper_hostname = var.hostname,
       masters = var.masters_number,
       workers = var.workers_number,
-      domain = local.subdomain
+      domain = local.subdomain,
+      master_ips = local.master_ips,
+      worker_ips = local.worker_ips,
+      bootstrap_ip = local.bootstrap_ip
     }
   )
   filename = "../inventory/hosts.ini"

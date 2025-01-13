@@ -59,7 +59,7 @@ backend openshift-api-server
 {% if bootstrap is defined %}
     server {{ bootstrap.name | lower }} {{ bootstrap.ipaddr }}:6443 check
 {% endif %}
-{% for m in masters %}
+{% for m in haproxy_masters %}
     server {{ m.name | lower }} {{ m.ipaddr }}:6443 check
 {% endfor %}
 

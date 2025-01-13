@@ -31,7 +31,7 @@ variable "Versionning" {
       os_name = "redhat"
       os_version_short = 9
       os_version_long = "9.5"
-      os_URL= "rhel9.qcow2"
+      os_URL= "/var/lib/libvirt/images/rhel95.qcow2"
       cloud-init_version = 24.4
     }
   }
@@ -40,18 +40,34 @@ variable "Versionning" {
 # Set locally
 locals {
   qcow2_image = lookup(var.Versionning[var.selected_version], "os_URL", "")
-}
-
-locals {
   cloud_init_version = lookup(var.Versionning[var.selected_version], "cloud-init_version", 0)
+  subdomain = "${var.clusterid}.${var.domain}"
+  master_ips = [for i in range(var.masters_number) : cidrhost(var.network_cidr, i + 10)]
+  worker_ips = [for i in range(var.workers_number) : cidrhost(var.network_cidr, i + 20)]
+  bootstrap_ip = cidrhost(var.network_cidr, 7)
+}
+
+variable "mac_addresses" {
+  type    = list(string)
+  default = ["52:54:00:36:14:e5", "52:54:00:36:14:e6", "52:54:00:36:14:e7"]
 }
 
 locals {
-  subdomain = "${var.clusterid}.${var.domain}"
+  master_details = [
+    for i in range(var.masters_number) : {
+      name = format("master%02d", i + 1)
+      ip   = cidrhost(var.network_cidr, i + 10)
+      mac  = var.mac_addresses[i]
+    }
+  ]
+}
+
+output "master_details" {
+  value = local.master_details
 }
 
 # To be set
-variable "hostname" { default = "bastion" }
+variable "hostname" { default = "helper" }
 variable "pool" { default = "default" }
 variable "clusterid" { default = "ocp4" }
 variable "domain" { default = "local" }
@@ -62,5 +78,5 @@ variable "mac_address" { default = "52:54:00:36:14:e5" }
 variable "memoryMB" { default = 1024 * 4 }
 variable "cpu" { default = 2 }
 variable "timezone" { default = "Europe/Paris" }
-variable "masters_number" { default = 1 }
-variable "workers_number" { default = 0 }
+variable "masters_number" { default = 3 }
+variable "workers_number" { default = 2 }

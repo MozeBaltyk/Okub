@@ -21,7 +21,7 @@ resource "libvirt_network" "network" {
     autostart = true
     domain    = local.subdomain
     addresses = [var.network_cidr]
-    dhcp { enabled = true }
+    dhcp { enabled = false }
 }
 
 data "template_file" "user_data" {
@@ -30,10 +30,14 @@ data "template_file" "user_data" {
     hostname   = var.hostname
     fqdn       = "${var.hostname}.${local.subdomain}"
     domain     = local.subdomain
+    clusterid  = var.clusterid
     timezone   = var.timezone
+    network_cidr = var.network_cidr
     masters    = var.masters_number
     workers    = var.workers_number
-    #public_key = file("${path.module}/.key.pub")
+    master_ips = join(",", local.master_ips)
+    worker_ips = join(",", local.worker_ips)
+    bootstrap_ip = local.bootstrap_ip
     public_key = tls_private_key.global_key.public_key_openssh
   }
 }
@@ -68,6 +72,7 @@ resource "libvirt_domain" "helper" {
   network_interface {
     network_id = libvirt_network.network.id
     mac          = var.mac_address
+    addresses    = [cidrhost(var.network_cidr, 3)]
     wait_for_lease = true
   }
 

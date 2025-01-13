@@ -5,6 +5,14 @@
   gather_facts: yes
   become: true
 
+  #vars:
+  #  global_helper_fqdn:
+  #  global_helper_hostname:
+  #  global_domain:
+  #  global_network_cidr:
+  #  global_masters:
+  #  global_workers:
+
   tasks:
     - name: install packages
       ansible.builtin.package:
