@@ -31,6 +31,8 @@ data "template_file" "user_data" {
     fqdn       = "${var.hostname}.${local.subdomain}"
     domain     = local.subdomain
     timezone   = var.timezone
+    masters    = var.masters_number
+    workers    = var.workers_number
     #public_key = file("${path.module}/.key.pub")
     public_key = tls_private_key.global_key.public_key_openssh
   }

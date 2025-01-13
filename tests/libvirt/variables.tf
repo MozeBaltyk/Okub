@@ -27,6 +27,13 @@ variable "Versionning" {
       os_URL= "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2"
       cloud-init_version = 24.4
     }
+    rhel9 ={
+      os_name = "redhat"
+      os_version_short = 9
+      os_version_long = "9.5"
+      os_URL= "rhel9.qcow2"
+      cloud-init_version = 24.4
+    }
   }
 }
 
@@ -55,5 +62,5 @@ variable "mac_address" { default = "52:54:00:36:14:e5" }
 variable "memoryMB" { default = 1024 * 4 }
 variable "cpu" { default = 2 }
 variable "timezone" { default = "Europe/Paris" }
-variable "masters_number" { default = 3 }
-variable "workers_number" { default = 2 }
+variable "masters_number" { default = 1 }
+variable "workers_number" { default = 0 }
