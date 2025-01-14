@@ -33,11 +33,9 @@ data "template_file" "user_data" {
     clusterid  = var.clusterid
     timezone   = var.timezone
     network_cidr = var.network_cidr
-    masters    = var.masters_number
-    workers    = var.workers_number
-    master_ips = join(",", local.master_ips)
-    worker_ips = join(",", local.worker_ips)
-    bootstrap_ip = local.bootstrap_ip
+    master_details = yamlencode(local.master_details)
+    worker_details = yamlencode(local.worker_details)
+    bootstrap_details = yamlencode(local.bootstrap_details)
     public_key = tls_private_key.global_key.public_key_openssh
   }
 }

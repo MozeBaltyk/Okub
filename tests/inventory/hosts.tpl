@@ -5,20 +5,22 @@ localhost ansible_connection=local
 
 [OKUB_HELPER]
 %{ for idx, ip in helper_ips ~}
-${helper_hostname}${idx + 1}.${domain} ansible_host=${ip}
+${helper_hostname}${idx + 1} ansible_host=${ip}
 %{ endfor ~}
 
 [OKUB_BOOTSTRAP]
-bootstrap01.${domain} ansible_host=${bootstrap_ip}
+%{ for bootstrap in bootstrap_details ~}
+${bootstrap.name} ansible_host=${bootstrap.ip} ansible_mac=${bootstrap.mac}
+%{ endfor ~}
 
 [OKUB_MASTERS]
-%{ for idx in range(masters) ~}
-master0${idx + 1}.${domain} ansible_host=${master_ips[idx]} # Master${idx + 1}
+%{ for master in master_details ~}
+${master.name} ansible_host=${master.ip} ansible_mac=${master.mac}
 %{ endfor ~}
 
 [OKUB_WORKERS]
-%{ for idx in range(workers) ~}
-worker0${idx + 1}.${domain} ansible_host=${worker_ips[idx]} # Worker${idx + 1}
+%{ for worker in worker_details ~}
+${worker.name} ansible_host=${worker.ip} ansible_mac=${worker.mac}
 %{ endfor ~}
 
 [OKUB_CLUSTER:children]
