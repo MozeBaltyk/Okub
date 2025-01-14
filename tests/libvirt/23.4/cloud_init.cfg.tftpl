@@ -46,36 +46,16 @@ ansible:
     run_ansible:
       - playbook_dir: /home/ansible/Okub
         playbook_name: ./playbooks/tasks/provision.yml
-        extra_vars:
-          global_helper_fqdn: ${fqdn}
-          global_helper_hostname: ${hostname}
-          global_domain: ${domain}
-          global_network_cidr: ${network_cidr}
-          global_master_details:
-%{ for master in master_details ~}
-            - ip: "${master.ip}"
-              mac: "${master.mac}"
-              name: "${master.name}"
-%{ endfor ~}
-          global_worker_details:
-%{ for worker in worker_details ~}
-            - ip: "${worker.ip}"
-              mac: "${worker.mac}"
-              name: "${worker.name}"
-%{ endfor ~}
-          global_bootstrap_details:
-%{ for bootstrap in bootstrap_details ~}
-            - ip: "${bootstrap.ip}"
-              mac: "${bootstrap.mac}"
-              name: "${bootstrap.name}"
-%{ endfor ~}
+        extra_vars: "${extra_vars}"
 
 bootcmd:
   - [ sh, -c, 'echo $(date) | sudo tee -a /root/bootcmd.log' ]
 
 runcmd:
   - [ sh, -c, 'echo $(date) | sudo tee -a /root/runcmd.log' ]
-  - systemctl start qemu-guest-agent
+  - [ systemctl, daemon-reload ]
+  - [ systemctl, enable, qemu-guest-agent.service ]
+  - [ systemctl, start, --no-block, qemu-guest-agent.service ]
   - domainname ${domain}
 
 final_message: "The system is finally up, after $UPTIME seconds"

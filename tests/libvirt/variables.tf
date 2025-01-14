@@ -70,21 +70,21 @@ locals {
 }
 
 locals {
-  master_details = [
-    for i in range(var.masters_number) : {
-      name = format("master%02d", i + 1)
-      ip   = cidrhost(var.network_cidr, i + 10)
-      mac  = var.masters_mac_addresses[i]
-    }]
-  worker_details = [
-    for i in range(var.workers_number) : {
-      name = format("worker%02d", i + 1)
-      ip   = cidrhost(var.network_cidr, i + 20)
-      mac  = var.workers_mac_addresses[i]
-    }]
-  bootstrap_details = [{
+  master_details = tolist([
+    for a in range(var.masters_number) : {
+      name = format("master%02d", a + 1)
+      ip   = cidrhost(var.network_cidr, a + 10)
+      mac  = var.masters_mac_addresses[a]
+    }])
+  worker_details = tolist([
+    for b in range(var.workers_number) : {
+      name = format("worker%02d", b + 1)
+      ip   = cidrhost(var.network_cidr, b + 20)
+      mac  = var.workers_mac_addresses[b]
+    }])
+  bootstrap_details = tolist([{
       name = format("bootstrap%02d", 1)
       ip   = cidrhost(var.network_cidr, 7)
       mac  = var.bootstrap_mac_addresses
-    }]
+    }])
 }
