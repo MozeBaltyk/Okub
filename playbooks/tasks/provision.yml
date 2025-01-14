@@ -26,7 +26,6 @@
           - curl
           - bash-completion
           - tree
-          - tar
           - libselinux-python3
           - firewalld
 

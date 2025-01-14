@@ -85,6 +85,6 @@ locals {
   bootstrap_details = [{
       name = format("bootstrap%02d", 1)
       ip   = cidrhost(var.network_cidr, 7)
-      mac  = "${var.bootstrap_mac_addresses}"
+      mac  = var.bootstrap_mac_addresses
     }]
 }

@@ -32,3 +32,7 @@ output "worker_details" {
 output "bootstrap_details" {
   value = local.bootstrap_details
 }
+
+output "rendered_cloud_init" {
+  value = data.template_file.user_data.rendered
+}
