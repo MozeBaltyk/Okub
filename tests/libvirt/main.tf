@@ -21,11 +21,11 @@ resource "libvirt_network" "network" {
     autostart = true
     domain    = local.subdomain
     addresses = [var.network_cidr]
-    dhcp { enabled = false }
+    dhcp { enabled = true }
 }
 
 data "template_file" "user_data" {
-  template = file("${path.module}/${local.cloud_init_version}/cloud_init.cfg")
+  template = file("${path.module}/${local.cloud_init_version}/cloud_init.cfg.tftpl")
   vars = {
     hostname   = var.hostname
     fqdn       = "${var.hostname}.${local.subdomain}"
@@ -33,9 +33,18 @@ data "template_file" "user_data" {
     clusterid  = var.clusterid
     timezone   = var.timezone
     network_cidr = var.network_cidr
-    master_details = yamlencode(local.master_details)
-    worker_details = yamlencode(local.worker_details)
-    bootstrap_details = yamlencode(local.bootstrap_details)
+    master_details = indent(14, yamlencode(local.master_details))
+    worker_details   = indent(14, yamlencode(local.worker_details))
+    bootstrap_details = indent(14, yamlencode(local.bootstrap_details))
+    extra_vars       = indent(10, yamlencode({
+      global_helper_fqdn    = "${var.hostname}.${local.subdomain}"
+      global_helper_hostname = var.hostname
+      global_domain         = local.subdomain
+      global_network_cidr   = var.network_cidr
+      global_master_details = local.master_details
+      global_worker_details = local.worker_details
+      global_bootstrap_details = local.bootstrap_details
+    }))
     public_key = tls_private_key.global_key.public_key_openssh
   }
 }
