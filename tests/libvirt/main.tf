@@ -1,6 +1,6 @@
 // fetch the release image from their mirrors
 resource "libvirt_volume" "os_image" {
-  name   = "${var.hostname}-os_image"
+  name   = "${var.hostname}-${var.selected_version}-os_image"
   pool   = "${var.pool}"
   source = "${local.qcow2_image}"
   format = "qcow2"
@@ -8,7 +8,7 @@ resource "libvirt_volume" "os_image" {
 
 // Use CloudInit ISO to add ssh-key to the instance
 resource "libvirt_cloudinit_disk" "commoninit" {
-  name           = "${var.hostname}-commoninit.iso"
+  name           = "${var.hostname}-${var.selected_version}-commoninit.iso"
   pool           = "${var.pool}"
   user_data      = data.template_cloudinit_config.config.rendered
   network_config = data.template_file.network_config.rendered
@@ -33,18 +33,9 @@ data "template_file" "user_data" {
     clusterid  = var.clusterid
     timezone   = var.timezone
     network_cidr = var.network_cidr
-    master_details = indent(14, yamlencode(local.master_details))
-    worker_details   = indent(14, yamlencode(local.worker_details))
-    bootstrap_details = indent(14, yamlencode(local.bootstrap_details))
-    extra_vars       = indent(10, yamlencode({
-      global_helper_fqdn    = "${var.hostname}.${local.subdomain}"
-      global_helper_hostname = var.hostname
-      global_domain         = local.subdomain
-      global_network_cidr   = var.network_cidr
-      global_master_details = local.master_details
-      global_worker_details = local.worker_details
-      global_bootstrap_details = local.bootstrap_details
-    }))
+    master_details = indent(8, yamlencode(local.master_details))
+    worker_details   = indent(8, yamlencode(local.worker_details))
+    bootstrap_details = indent(8, yamlencode(local.bootstrap_details))
     public_key = tls_private_key.global_key.public_key_openssh
   }
 }
@@ -84,6 +75,10 @@ resource "libvirt_domain" "helper" {
   }
 
   cloudinit = libvirt_cloudinit_disk.commoninit.id
+
+  cpu {
+    mode = "host-passthrough"
+  }
 
   console {
     type        = "pty"

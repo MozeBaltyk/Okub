@@ -1,6 +1,6 @@
 # Selecting version
 variable "selected_version" {
-  default = "fedora40"  # You can change this as needed to "fedora41"
+  default = "fedora40_local"  # You can change this as needed to "fedora41"
 }
 
 # Mapping Versions
@@ -27,12 +27,26 @@ variable "Versionning" {
       os_URL= "https://download.fedoraproject.org/pub/fedora/linux/releases/41/Cloud/x86_64/images/Fedora-Cloud-Base-Generic-41-1.4.x86_64.qcow2"
       cloud-init_version = 24.4
     }
-    rhel9 ={
+    fedora40_local = {
+      os_name = "fedora"
+      os_version_short = 40
+      os_version_long = "40.1.14"
+      os_URL= "file:///var/lib/libvirt/images/fedora40.qcow2"
+      cloud-init_version = 23.4
+    }
+    fedora41_local = {
+      os_name = "fedora"
+      os_version_short = 41
+      os_version_long = "41.1.4"
+      os_URL= "file:///var/lib/libvirt/images/fedora41.qcow2"
+      cloud-init_version = 24.4
+    }
+    rhel9_local ={
       os_name = "redhat"
       os_version_short = 9
       os_version_long = "9.5"
-      os_URL= "/var/lib/libvirt/images/rhel95.qcow2"
-      cloud-init_version = 24.4
+      os_URL= "file:///var/lib/libvirt/images/rhel95.qcow2"
+      cloud-init_version = 23.4
     }
   }
 }

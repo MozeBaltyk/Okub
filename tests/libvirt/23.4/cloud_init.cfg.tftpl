@@ -29,9 +29,29 @@ packages:
   - qemu-guest-agent
   - git
   - python3-pip
+  - yq
 
 package_update: true
 package_upgrade: true
+package_reboot_if_required: true
+
+
+## Write yaml
+write_files:
+  - path: /home/ansible/vars.yml
+    permissions: "0644"
+    content: |
+      ---
+      global_helper_fqdn: ${fqdn}
+      global_helper_hostname: ${hostname}
+      global_domain: ${domain}
+      global_network_cidr: ${network_cidr}
+      global_master_details: 
+        ${master_details}
+      global_worker_details: 
+        ${worker_details}
+      global_bootstrap_details: 
+        ${bootstrap_details}
 
 ## Ansible part
 ansible:
@@ -46,7 +66,8 @@ ansible:
     run_ansible:
       - playbook_dir: /home/ansible/Okub
         playbook_name: ./playbooks/tasks/provision.yml
-        extra_vars: "${extra_vars}"
+        extra_vars:
+          vars_file: /home/ansible/vars.yml
 
 bootcmd:
   - [ sh, -c, 'echo $(date) | sudo tee -a /root/bootcmd.log' ]
@@ -56,6 +77,6 @@ runcmd:
   - [ systemctl, daemon-reload ]
   - [ systemctl, enable, qemu-guest-agent.service ]
   - [ systemctl, start, --no-block, qemu-guest-agent.service ]
-  - domainname ${domain}
+  - [ domainname, ${domain} ]
 
 final_message: "The system is finally up, after $UPTIME seconds"

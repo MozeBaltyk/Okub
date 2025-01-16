@@ -32,6 +32,7 @@ packages:
 
 package_update: true
 package_upgrade: true
+package_reboot_if_required: true
 
 ## Ansible part
 ansible:
@@ -52,7 +53,9 @@ bootcmd:
 
 runcmd:
   - [ sh, -c, 'echo $(date) | sudo tee -a /root/runcmd.log' ]
-  - systemctl start qemu-guest-agent
-  - domainname ${domain}
+  - [ systemctl, daemon-reload ]
+  - [ systemctl, enable, qemu-guest-agent.service ]
+  - [ systemctl, start, --no-block, qemu-guest-agent.service ]
+  - [ domainname, ${domain} ]
 
 final_message: "The system is finally up, after $UPTIME seconds"
