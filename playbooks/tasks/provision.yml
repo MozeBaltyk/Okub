@@ -4,30 +4,10 @@
   connection: local
   gather_facts: yes
   become: true
-
-  #vars:
-  #  global_helper_fqdn:
-  #  global_helper_hostname:
-  #  global_domain:
-  #  global_network_cidr:
-  #  global_masters:
-  #  global_workers:
-
-  tasks:
-    - name: install packages
-      ansible.builtin.package:
-        state: present
-        name:
-          - tar
-          - unzip
-          - python3-pip
-          - vim
-          - wget
-          - curl
-          - bash-completion
-          - tree
-          - libselinux-python3
-          - firewalld
+  vars:
+    global_domain: "example.com"
+    global_masters: 3
+    global_workers: 2
 
   roles:
     #- {role: helper_set_quayio, tags: quayio}

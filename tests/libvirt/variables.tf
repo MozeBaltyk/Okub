@@ -53,6 +53,8 @@ variable "Versionning" {
 
 # To be set
 variable "hostname" { default = "helper" }
+variable "rh_username" { default = "rhel" }
+variable "rh_password" { default = "redhat" }
 variable "pool" { default = "default" }
 variable "clusterid" { default = "ocp4" }
 variable "domain" { default = "local" }
@@ -81,6 +83,7 @@ locals {
   cloud_init_version = lookup(var.Versionning[var.selected_version], "cloud-init_version", 0)
   subdomain = "${var.clusterid}.${var.domain}"
   bootstrap_ip = cidrhost(var.network_cidr, 7)
+  os_name = lookup(var.Versionning[var.selected_version], "os_name", "")
 }
 
 locals {

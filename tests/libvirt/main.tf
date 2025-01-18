@@ -27,6 +27,7 @@ resource "libvirt_network" "network" {
 data "template_file" "user_data" {
   template = file("${path.module}/${local.cloud_init_version}/cloud_init.cfg.tftpl")
   vars = {
+    os_name    = local.os_name
     hostname   = var.hostname
     fqdn       = "${var.hostname}.${local.subdomain}"
     domain     = local.subdomain
@@ -37,6 +38,8 @@ data "template_file" "user_data" {
     worker_details   = indent(8, yamlencode(local.worker_details))
     bootstrap_details = indent(8, yamlencode(local.bootstrap_details))
     public_key = tls_private_key.global_key.public_key_openssh
+    rh_username = var.rh_username
+    rh_password = var.rh_password
   }
 }
 

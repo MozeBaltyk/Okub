@@ -33,6 +33,6 @@ output "ips" {
 #   value = local.bootstrap_details
 # }
 # 
-output "rendered_cloud_init" {
-  value = data.template_file.user_data.rendered
-}
+# output "rendered_cloud_init" {
+#   value = data.template_file.user_data.rendered
+# }
