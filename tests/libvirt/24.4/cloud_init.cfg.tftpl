@@ -28,11 +28,49 @@ resize_rootfs: true
 packages:
   - qemu-guest-agent
   - git
-  - python-pip
+  - python3-pip
+  - libselinux-python3
+  - yq
+  - tar
+  - unzip
+  - vim
+  - wget
+  - curl
+  - bash-completion
+  - tree
+  - firewalld
 
 package_update: true
 package_upgrade: true
 package_reboot_if_required: true
+
+## Write yaml
+write_files:
+  - path: /home/ansible/vars.yml
+    owner: 'ansible:ansible'
+    permissions: "0644"
+    defer: true
+    content: |
+      ---
+      global_helper_fqdn: ${fqdn}
+      global_helper_hostname: ${hostname}
+      global_domain: ${domain}
+      global_network_cidr: ${network_cidr}
+      global_master_details:
+        ${master_details}
+      global_worker_details:
+        ${worker_details}
+      global_bootstrap_details:
+        ${bootstrap_details}
+
+# Redhat subscription manager
+%{if os_name == "redhat" }
+rh_subscription:
+  username: ${rh_username}
+  password: ${rh_password}
+  server-hostname: ${fqdn}
+  auto-attach: True
+%{ endif }
 
 ## Ansible part
 ansible:
@@ -47,6 +85,7 @@ ansible:
     run_ansible:
       - playbook_dir: /home/ansible/Okub
         playbook_name: ./playbooks/tasks/provision.yml
+        extra_vars: "@/home/ansible/vars.yml"
 
 bootcmd:
   - [ sh, -c, 'echo $(date) | sudo tee -a /root/bootcmd.log' ]

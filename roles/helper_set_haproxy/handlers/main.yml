@@ -3,6 +3,7 @@
 
 - name: Reboot
   ansible.builtin.reboot:
+  when: ansible_connection != "local"
 
 - name: Restart haproxy
   ansible.builtin.service:

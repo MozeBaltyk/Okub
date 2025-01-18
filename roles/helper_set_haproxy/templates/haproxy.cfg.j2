@@ -48,7 +48,7 @@ listen stats
 
 #---------------------------------------------------------------------
 
-# 6443
+# OpenShift API Server - Port 6443
 frontend openshift-api-server
     bind *:6443
     default_backend openshift-api-server
@@ -56,14 +56,16 @@ frontend openshift-api-server
 
 backend openshift-api-server
     balance source
-{% if bootstrap is defined %}
-    server {{ bootstrap.name | lower }} {{ bootstrap.ipaddr }}:6443 check
+{% if haproxy_bootstrap is defined %}
+{% for b in haproxy_bootstrap %}
+    server {{ b.name | lower }} {{ b.ip }}:6443 check
+{% endfor %}
 {% endif %}
 {% for m in haproxy_masters %}
     server {{ m.name | lower }} {{ m.ipaddr }}:6443 check
 {% endfor %}
 
-# 22623
+# Port 22623 for the Machine Config Server
 frontend machine-config-server
     bind *:22623
     default_backend machine-config-server
@@ -71,14 +73,16 @@ frontend machine-config-server
 
 backend machine-config-server
     balance source
-{% if bootstrap is defined %}
-    server {{ bootstrap.name | lower }} {{ bootstrap.ipaddr }}:22623 check
+{% if haproxy_bootstrap is defined %}
+{% for b in haproxy_bootstrap %}
+    server {{ b.name | lower }} {{ b.ip }}:22623 check
+{% endfor %}
 {% endif %}
-{% for m in masters %}
-    server {{ m.name | lower }} {{ m.ipaddr }}:22623 check
+{% for m in haproxy_masters %}
+    server {{ m.name | lower }} {{ m.ip }}:22623 check
 {% endfor %}
 
-# 80
+# Port 80 for HTTP traffic
 frontend ingress-http
     bind *:80
     default_backend ingress-http
@@ -86,17 +90,17 @@ frontend ingress-http
 
 backend ingress-http
     balance source
-{% if workers is defined %}
-{% for w in workers %}
-    server {{ w.name | lower }}-http-router{{ loop.index0 }} {{ w.ipaddr }}:80 check
+{% if haproxy_workers is defined %}
+{% for w in haproxy_workers %}
+    server {{ w.name | lower }}-http-router{{ loop.index0 }} {{ w.ip }}:80 check
 {% endfor %}
 {% else %}
-{% for m in masters %}
-    server {{ m.name | lower }}-http-router{{ loop.index0 }} {{ m.ipaddr }}:80 check
+{% for m in haproxy_masters %}
+    server {{ m.name | lower }}-http-router{{ loop.index0 }} {{ m.ip }}:80 check
 {% endfor %}
 {% endif %}
 
-# 443
+# Port 443 for HTTPS traffic
 frontend ingress-https
     bind *:443
     default_backend ingress-https
@@ -104,13 +108,13 @@ frontend ingress-https
 
 backend ingress-https
     balance source
-{% if workers is defined %}
-{% for w in workers %}
-    server {{ w.name | lower }}-https-router{{ loop.index0 }} {{ w.ipaddr }}:443 check
+{% if haproxy_workers is defined %}
+{% for w in haproxy_workers %}
+    server {{ w.name | lower }}-https-router{{ loop.index0 }} {{ w.ip }}:443 check
 {% endfor %}
 {% else %}
-{% for m in masters %}
-    server {{ m.name | lower }}-https-router{{ loop.index0 }} {{ m.ipaddr }}:443 check
+{% for m in haproxy_masters %}
+    server {{ m.name | lower }}-https-router{{ loop.index0 }} {{ m.ip }}:443 check
 {% endfor %}
 {% endif %}
 

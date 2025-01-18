@@ -4,10 +4,19 @@
   connection: local
   gather_facts: yes
   become: true
-  vars:
-    global_domain: "example.com"
-    global_masters: 3
-    global_workers: 2
+
+  #pre_tasks:
+  #  - name: Debug variables
+  #    debug:
+  #      var: global_bootstrap_details
+
+  #  - name: Debug variables
+  #    debug:
+  #      var: global_master_details
+
+  #  - name: Debug variables
+  #    debug:
+  #      var: global_worker_details
 
   roles:
     #- {role: helper_set_quayio, tags: quayio}
