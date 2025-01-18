@@ -62,7 +62,7 @@ backend openshift-api-server
 {% endfor %}
 {% endif %}
 {% for m in haproxy_masters %}
-    server {{ m.name | lower }} {{ m.ipaddr }}:6443 check
+    server {{ m.name | lower }} {{ m.ip }}:6443 check
 {% endfor %}
 
 # Port 22623 for the Machine Config Server
