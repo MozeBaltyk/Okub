@@ -1,2 +1,45 @@
 ---
 # tasks file for helper_set_dhcp
+- name: Install dhcp-server
+  ansible.builtin.package:
+    name: dhcp-server
+    state: present
+
+- name: Check if /sys/firmware/efi/efivars exists
+  ansible.builtin.stat:
+    path: /sys/firmware/efi/efivars
+  register: efi_vars
+  ignore_errors: true
+
+- name: Set UEFI variable
+  ansible.builtin.set_fact:
+    uefi: true
+  when: efi_vars.stat.exists
+
+- name: Write out dhcp file
+  ansible.builtin.template:
+    src: ../templates/dhcpd.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+  notify:
+    - restart dhcpd
+  when: not uefi
+
+- name: Write out dhcp file (UEFI)
+  ansible.builtin.template:
+    src: ../templates/dhcpd-uefi.conf.j2
+    dest: /etc/dhcp/dhcpd.conf
+  notify:
+    - restart dhcpd
+  when: uefi
+
+- name: Open firewall for DHCP service
+  ansible.builtin.firewalld:
+    service: dhcp
+    permanent: true
+    state: enabled
+
+- name: Start and enable dhcpd
+  ansible.builtin.service:
+    name: dhcpd
+    state: started
+    enabled: true

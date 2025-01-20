@@ -1,2 +1,8 @@
 ---
 # defaults file for helper_set_dns
+bind_helper_ip: "{{ ansible_default_ipv4.address }}"
+bind_helper_name: "{{ ansible_hostname }}"
+bind_domain: "{{ global_domain }}"
+bind_bootstrap: "{{ global_bootstrap_details }}"
+bind_masters: "{{ global_master_details }}"
+bind_workers: "{{ global_worker_details }}"

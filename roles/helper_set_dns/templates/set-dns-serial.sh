@@ -1,5 +1,5 @@
 #!/bin/bash
-dnsserialfile=/usr/local/src/dnsserial-DO_NOT_DELETE_BEFORE_ASKING_CHRISTIAN.txt
+dnsserialfile=/usr/local/src/dnsserial-DO_NOT_DELETE_BEFORE_ASKING.txt
 zonefile=/var/named/zonefile.db
 if [ -f zonefile ] ; then
 	echo $[ $(grep serial ${zonefile}  | tr -d "\t"" ""\n"  | cut -d';' -f 1) + 1 ] | tee ${dnsserialfile}

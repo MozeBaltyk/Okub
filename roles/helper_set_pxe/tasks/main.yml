@@ -1,2 +1,38 @@
 ---
 # tasks file for helper_set_pxe
+- name: Install bind
+  ansible.builtin.package:
+    name: 
+      - tftp-server
+      - syslinux
+    state: present
+
+- name: Set the bootstrap specific tftp file
+  ansible.builtin.template:
+    src: pxe-bootstrap.j2
+    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ bootstrap.macaddr | lower | regex_replace (':', '-')}}"
+    mode: 0555
+  notify:
+    - restart tftp
+  when: bootstrap is defined
+
+- name: Set the master specific tftp files
+  ansible.builtin.template:
+    src: pxe-master.j2
+    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
+    mode: 0555
+  with_items: "{{ masters | lower }}"
+  notify:
+    - restart tftp
+
+- name: Set the worker specific tftp files
+  ansible.builtin.template:
+    src: pxe-worker.j2
+    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ item.macaddr | regex_replace (':', '-')}}"
+    mode: 0555
+  with_items: "{{ workers | lower }}"
+  notify:
+    - restart tftp
+  when:
+    - workers is defined
+    - workers | length > 0

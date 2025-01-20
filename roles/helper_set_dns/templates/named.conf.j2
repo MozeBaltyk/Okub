@@ -56,12 +56,12 @@ zone "." IN {
 };
 
 ########### Add what's between these comments ###########
-zone "{{ dns.clusterid }}.{{ dns.domain }}" IN {
+zone "{{ bind_domain }}" IN {
 	type	master;
 	file	"zonefile.db";
 };
 
-zone "{{ helper.ipaddr.split('.')[2] }}.{{ helper.ipaddr.split('.')[1] }}.{{ helper.ipaddr.split('.')[0] }}.in-addr.arpa" IN {
+zone "{{ bind_helper_ip.split('.')[2] }}.{{ bind_helper_ip.split('.')[1] }}.{{ bind_helper_ip.split('.')[0] }}.in-addr.arpa" IN {
 	type	master;
 	file	"reverse.db";
 };

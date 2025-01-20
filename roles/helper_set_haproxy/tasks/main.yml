@@ -48,6 +48,18 @@
       notify:
         - Reboot
 
+- name: Open firewall for HTTP service
+  ansible.builtin.firewalld:
+    service: http
+    permanent: true
+    state: enabled
+
+- name: Open firewall for HTTPS service
+  ansible.builtin.firewalld:
+    service: https
+    permanent: true
+    state: enabled
+
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
 

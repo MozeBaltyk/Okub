@@ -1,6 +1,5 @@
 ---
 # handlers file for helper_set_dns
-
 - name: restart bind
   ansible.builtin.service:
     name: named
