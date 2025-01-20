@@ -60,6 +60,15 @@
     permanent: true
     state: enabled
 
+- name: Open firewall for ports 6443 and 22623
+  ansible.builtin.firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+  loop:
+    - 6443
+    - 22623
+
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
 
