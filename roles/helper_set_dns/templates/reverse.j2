@@ -15,7 +15,9 @@ $TTL 1W
 {% endfor %}
 ;
 {% if bind_bootstrap is defined %}
-{{ bind_bootstrap.ip.split('.')[3] }}	IN	PTR	{{ bind_bootstrap.name | lower  }}.{{ bind_domain | lower }}.
+{% for b in bind_bootstrap %}
+{{ b.ip.split('.')[3] }}	IN	PTR	{{ b.name | lower  }}.{{ bind_domain | lower }}.
+{% endfor %}
 ;
 {% endif %}
 {% if dns.lb_ipaddr is not defined or dns.lb_ipaddr == bind_helper_ip %}

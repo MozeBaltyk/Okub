@@ -38,7 +38,9 @@ api-int		IN	A	{{ bind_helper_ip }}
 ;
 {% if bind_bootstrap is defined %}
 ; Create entry for the bootstrap host
-{{ bind_bootstrap.name | lower }}	IN	A	{{ bind_bootstrap.ip }}
+{% for b in bind_bootstrap %}
+{{ b.name | lower }}	IN	A	{{ b.ip }}
+{% endfor %}
 ;
 {% endif %}
 ; Create entries for the master hosts
