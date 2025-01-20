@@ -18,6 +18,7 @@
   ansible.builtin.template:
     src: set-dns-serial.sh
     dest: "/usr/local/bin/set-dns-serial.sh"
+    mode: '0755'
 
 - name: Set zone serial number
   ansible.builtin.shell: "/usr/local/bin/set-dns-serial.sh"
