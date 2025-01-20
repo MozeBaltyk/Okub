@@ -5,18 +5,18 @@
   gather_facts: yes
   become: true
 
-  #pre_tasks:
-  #  - name: Debug variables
-  #    debug:
-  #      var: global_bootstrap_details
+  pre_tasks:
+    - name: Debug variables
+      debug:
+        var: global_bootstrap_details
 
-  #  - name: Debug variables
-  #    debug:
-  #      var: global_master_details
+    - name: Debug variables
+      debug:
+        var: global_master_details
 
-  #  - name: Debug variables
-  #    debug:
-  #      var: global_worker_details
+    - name: Debug variables
+      debug:
+        var: global_worker_details
 
   roles:
     - {role: helper_set_dns, tags: dns}

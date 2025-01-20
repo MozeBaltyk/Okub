@@ -17,7 +17,7 @@ smtp	IN	A	{{ bind_helper_ip }}
 {%if high_availability is defined %}
 ; Create entry for the bastion hosts
 {% for h in high_availability.helpernodes %}
-{{ h.name | lower }}		IN	A	{{ h.ipaddr }}
+{{ h.name | lower }}		IN	A	{{ h.ip }}
 {% endfor %}
 {% endif %}
 ;
