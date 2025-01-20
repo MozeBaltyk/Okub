@@ -28,7 +28,7 @@
   ansible.builtin.set_fact:
     serialnumber: "{{ dymanicserialnumber.stdout }}"
 
-- name: Write out "{{ dns.domain | lower }}" zone file
+- name: Write out zone file
   ansible.builtin.template:
     src: zonefile.j2
     dest: /var/named/zonefile.db
