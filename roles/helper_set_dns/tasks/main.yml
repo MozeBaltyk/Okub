@@ -69,3 +69,9 @@
     state: restarted
     daemon_reload: true
     name: systemd-resolved
+
+- name: Restart service NetworkManager
+  ansible.builtin.systemd_service:
+    state: restarted
+    daemon_reload: true
+    name: NetworkManager
