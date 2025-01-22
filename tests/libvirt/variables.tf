@@ -83,6 +83,12 @@ locals {
   cloud_init_version = lookup(var.Versionning[var.selected_version], "cloud-init_version", 0)
   subdomain = "${var.clusterid}.${var.domain}"
   bootstrap_ip = cidrhost(var.network_cidr, 7)
+  gateway_ip = cidrhost(var.network_cidr, 1)
+  broadcast_ip = cidrhost(var.network_cidr, -1)
+  netmask = cidrnetmask(var.network_cidr)
+  poolstart = cidrhost(var.network_cidr, 10)
+  poolend = cidrhost(var.network_cidr, -2)
+  ipid = cidrhost(var.network_cidr, 0)
   os_name = lookup(var.Versionning[var.selected_version], "os_name", "")
 }
 

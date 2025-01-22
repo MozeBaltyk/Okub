@@ -55,3 +55,17 @@
     name: named
     state: started
     enabled: true
+
+- name: Add IPv4 DNS server addresses
+  community.general.nmcli:
+    conn_name: "cloud-init eth0"
+    type: ethernet
+    dns4:
+    - "{{ bind_helper_ip}}"
+    state: present
+
+- name: Restart service systemd-resolved
+  ansible.builtin.systemd_service:
+    state: restarted
+    daemon_reload: true
+    name: systemd-resolved

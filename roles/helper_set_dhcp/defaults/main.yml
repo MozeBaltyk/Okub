@@ -1,2 +1,23 @@
 ---
 # defaults file for helper_set_dhcp
+dhcp_helper_ip: "{{ ansible_default_ipv4.address }}"
+dhcp_helper_name: "{{ ansible_hostname }}"
+dhcp_domain: "{{ global_domain }}"
+dhcp_bootstrap: "{{ global_bootstrap_details }}"
+dhcp_masters: "{{ global_master_details }}"
+dhcp_workers: "{{ global_worker_details }}"
+
+dhcp_gateway: "{{ global_gateway }}"
+dhcp_broadcast: "{{ global_broadcast }}"
+dhcp_netmask: "{{ global_netmask }}"
+dhcp_poolstart: "{{ global_poolstart }}"
+dhcp_poolend: "{{ global_poolend }}"
+dhcp_ipid: "{{ global_ipid }}"
+
+#  router: "192.168.100.1"                  #default gateway of the network assigned to the masters/workers
+#  bcast: "192.168.100.255"                 #broadcast address for your network
+#  netmask: "255.255.255.0"                 #netmask that gets assigned to your masters/workers
+#  poolstart: "192.168.100.10"              #First address in your dhcp address pool
+#  poolend: "192.168.100.50"                #Last address in your dhcp address pool
+#  ipid: "192.168.100.0"                    #ip network id for the range
+#  netmaskid: "255.255.255.0"  

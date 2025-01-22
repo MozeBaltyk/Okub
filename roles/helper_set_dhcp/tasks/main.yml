@@ -18,7 +18,7 @@
 
 - name: Write out dhcp file
   ansible.builtin.template:
-    src: ../templates/dhcpd.conf.j2
+    src: dhcpd.conf.j2
     dest: /etc/dhcp/dhcpd.conf
   notify:
     - restart dhcpd
@@ -26,7 +26,7 @@
 
 - name: Write out dhcp file (UEFI)
   ansible.builtin.template:
-    src: ../templates/dhcpd-uefi.conf.j2
+    src: dhcpd-uefi.conf.j2
     dest: /etc/dhcp/dhcpd.conf
   notify:
     - restart dhcpd
