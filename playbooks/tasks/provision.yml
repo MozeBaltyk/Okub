@@ -21,6 +21,6 @@
   roles:
     - {role: helper_set_dns, tags: dns}
     - {role: helper_set_haproxy, tags: haproxy}
-    #- {role: helper_set_dhcp, tags: dhcp}
+    - {role: helper_set_dhcp, tags: dhcp}
     #- {role: helper_set_quayio, tags: quayio}
     #- {role: helper_set_pxe, tags: pxe}

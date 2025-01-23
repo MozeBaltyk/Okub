@@ -33,7 +33,12 @@ data "template_file" "user_data" {
     domain     = local.subdomain
     clusterid  = var.clusterid
     timezone   = var.timezone
-    network_cidr = var.network_cidr
+    gateway_ip = local.gateway_ip
+    broadcast_ip = local.broadcast_ip
+    netmask = local.netmask
+    poolstart = local.poolstart
+    poolend = local.poolend
+    ipid = local.ipid
     master_details = indent(8, yamlencode(local.master_details))
     worker_details   = indent(8, yamlencode(local.worker_details))
     bootstrap_details = indent(8, yamlencode(local.bootstrap_details))

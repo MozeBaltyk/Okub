@@ -2,13 +2,14 @@
 # defaults file for helper_set_dhcp
 dhcp_helper_ip: "{{ ansible_default_ipv4.address }}"
 dhcp_helper_name: "{{ ansible_hostname }}"
+dhcp_helper_networkifacename: "{{ ansible_default_ipv4.interface }}"
 dhcp_domain: "{{ global_domain }}"
 dhcp_bootstrap: "{{ global_bootstrap_details }}"
 dhcp_masters: "{{ global_master_details }}"
 dhcp_workers: "{{ global_worker_details }}"
 
-dhcp_gateway: "{{ global_gateway }}"
-dhcp_broadcast: "{{ global_broadcast }}"
+dhcp_gateway: "{{ global_gateway_ip }}"
+dhcp_broadcast: "{{ global_broadcast_ip }}"
 dhcp_netmask: "{{ global_netmask }}"
 dhcp_poolstart: "{{ global_poolstart }}"
 dhcp_poolend: "{{ global_poolend }}"

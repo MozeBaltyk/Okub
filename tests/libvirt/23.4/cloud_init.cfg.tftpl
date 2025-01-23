@@ -52,6 +52,12 @@ write_files:
     defer: true
     content: |
       ---
+      global_gateway_ip = ${gateway_ip}
+      global_broadcast_ip = ${broadcast_ip}
+      global_netmask = ${netmask}
+      global_poolstart = ${poolstart}
+      global_poolend = ${poolend}
+      global_ipid = ${ipid}
       global_helper_fqdn: ${fqdn}
       global_helper_hostname: ${hostname}
       global_domain: ${domain}
