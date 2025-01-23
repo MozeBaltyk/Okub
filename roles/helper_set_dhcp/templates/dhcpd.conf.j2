@@ -8,8 +8,8 @@ allow bootp;
     option routers                  {{ dhcp_gateway }};
     option broadcast-address        {{ dhcp_broadcast }};
     option subnet-mask              {{ dhcp_netmask }};
-{% if dhcp.dns is defined and dhcp.dns != "" %}
-    option domain-name-servers      {{ dhcp.dns }};
+{% if dhcp_dns is defined and dhcp_dns != "" %}
+    option domain-name-servers      {{ dhcp_dns }};
 {% else %}
     option domain-name-servers      {{ dhcp_helper_ip }};
 {% endif %}

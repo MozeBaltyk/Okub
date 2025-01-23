@@ -14,11 +14,4 @@ dhcp_netmask: "{{ global_netmask }}"
 dhcp_poolstart: "{{ global_poolstart }}"
 dhcp_poolend: "{{ global_poolend }}"
 dhcp_ipid: "{{ global_ipid }}"
-
-#  router: "192.168.100.1"                  #default gateway of the network assigned to the masters/workers
-#  bcast: "192.168.100.255"                 #broadcast address for your network
-#  netmask: "255.255.255.0"                 #netmask that gets assigned to your masters/workers
-#  poolstart: "192.168.100.10"              #First address in your dhcp address pool
-#  poolend: "192.168.100.50"                #Last address in your dhcp address pool
-#  ipid: "192.168.100.0"                    #ip network id for the range
-#  netmaskid: "255.255.255.0"  
+dhcp_dns: ""
