@@ -30,7 +30,7 @@
     dest: /etc/dhcp/dhcpd.conf
   notify:
     - restart dhcpd
-  when: uefi
+  when: uefi is defined and uefi
 
 - name: Open firewall for DHCP service
   ansible.builtin.firewalld:
