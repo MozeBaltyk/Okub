@@ -61,7 +61,7 @@ create:
     cd ../../tests/libvirt && tofu plan -out=terraform.tfplan \
       -var "hostname={{ HELPER_HOSTNAME }}" \
       -var "mac_address=${MAC_ADDR}" \
-      -var "clusterid= {{ CLUSTER_NAME }}" \
+      -var "clusterid={{ CLUSTER_NAME }}" \
       -var "domain={{ DOMAIN }}" \
       -var "masters_number={{ MASTERS }}" \
       -var "workers_number={{ WORKERS }}" \
