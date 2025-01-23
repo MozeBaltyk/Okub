@@ -22,7 +22,7 @@
     dest: /etc/dhcp/dhcpd.conf
   notify:
     - restart dhcpd
-  when: not uefi
+  when: uefi is not defined
 
 - name: Write out dhcp file (UEFI)
   ansible.builtin.template:

@@ -36,6 +36,7 @@ data "template_file" "user_data" {
     gateway_ip = local.gateway_ip
     broadcast_ip = local.broadcast_ip
     netmask = local.netmask
+    network_cidr = var.network_cidr
     poolstart = local.poolstart
     poolend = local.poolend
     ipid = local.ipid

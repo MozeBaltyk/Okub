@@ -26,20 +26,20 @@ allow bootp;
         # Static entries
 {% if dhcp_bootstrap is defined %}
 {% for b in dhcp_bootstrap %}
-        host {{ b.name | lower }} { hardware ethernet {{ b.macaddr }}; fixed-address {{ b.ip }}; }
+        host {{ b.name | lower }} { hardware ethernet {{ b.mac }}; fixed-address {{ b.ip }}; }
 {% endfor %}
 {% endif %}
 {% for m in dhcp_masters %}
-        host {{ m.name | lower }} { hardware ethernet {{ m.macaddr }}; fixed-address {{ m.ip }}; }
+        host {{ m.name | lower }} { hardware ethernet {{ m.mac }}; fixed-address {{ m.ip }}; }
 {% endfor %}
 {% if dhcp_workers is defined %}
 {% for w in dhcp_workers %}
-        host {{ w.name | lower }} { hardware ethernet {{ w.macaddr }}; fixed-address {{ w.ip }}; }
+        host {{ w.name | lower }} { hardware ethernet {{ w.mac }}; fixed-address {{ w.ip }}; }
 {% endfor %}
 {% endif %}
 {% if other is defined %}
 {% for o in other %}
-        host {{ o.name }} { hardware ethernet {{ o.macaddr }}; fixed-address {{ o.ip }}; }
+        host {{ o.name }} { hardware ethernet {{ o.mac }}; fixed-address {{ o.ip }}; }
 {% endfor %}
 {% endif %}
         # this will not give out addresses to hosts not listed above
