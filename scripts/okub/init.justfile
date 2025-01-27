@@ -11,23 +11,23 @@ WORKERS            :=  env_var_or_default('WORKERS', "0")
 DHCP_BOOL          :=  env_var_or_default('DHCP', "FALSE")
 LB_BOOL            :=  env_var_or_default('LB', "FALSE")
 # IF LB_BOOL is FALSE
-APIVIP             :=  env_var_or_default('APIVIP', "192.168.10.10")
-INGRESSVIP         :=  env_var_or_default('INGRESSVIP', "192.168.10.11")
-MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.10.0/24")
+APIVIP             :=  env_var_or_default('APIVIP', "192.168.100.100")
+INGRESSVIP         :=  env_var_or_default('INGRESSVIP', "192.168.100.110")
+MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.100.0/24")
 # IF INTERNAL_REGISTRY defined
 INTERNAL_REGISTRY  :=  env_var_or_default('INTERNAL_REGISTRY', "")
 # IF `just init pxe`
 PXE_SERVER         :=  env_var_or_default('PXE_SERVER', `hostname -i`)
 # IF MASTERS greater or equal to 3 (give one of the master's ip)
-RENDEZVOUS_IP      :=  env_var_or_default('RENDEZVOUS_IP', "192.168.111.11")
+RENDEZVOUS_IP      :=  env_var_or_default('RENDEZVOUS_IP', "192.168.100.9")
 # STATIC NETWORK if DHCP_BOOL is FALSE
 MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', "00:14:22:01:23:45 00:25:96:12:34:56 00:50:56:C0:00:08")
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', "00:0C:29:4F:8E:35 00:1A:4B:16:01:59")
-IP_MASTERS         :=  env_var_or_default('IP_MASTERS', "192.168.111.11 192.168.111.12 192.168.111.13")
-IP_WORKERS         :=  env_var_or_default('IP_WORKERS', "192.168.111.14 192.168.111.15")
+IP_MASTERS         :=  env_var_or_default('IP_MASTERS', "192.168.100.10 192.168.100.11 192.168.100.12")
+IP_WORKERS         :=  env_var_or_default('IP_WORKERS', "192.168.100.20 192.168.100.21")
 INTERFACE          :=  env_var_or_default('INTERFACE', "eno1")
-GATEWAY            :=  env_var_or_default('GATEWAY', "192.168.111.253")
-DNS_SERVER         :=  env_var_or_default('DNS_SERVER', "192.168.111.1")
+GATEWAY            :=  env_var_or_default('GATEWAY', "192.168.100.1")
+DNS_SERVER         :=  env_var_or_default('DNS_SERVER', "192.168.100.3")
 
 
 # Download Openshift-install in {{OKUB_INSTALL_PATH}}/bin
