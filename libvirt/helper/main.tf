@@ -78,7 +78,7 @@ resource "libvirt_domain" "helper" {
 
   network_interface {
     network_id = libvirt_network.network.id
-    mac          = var.mac_address
+    mac          = var.helper_mac_address
     addresses    = [cidrhost(var.network_cidr, 3)]
     wait_for_lease = true
   }
