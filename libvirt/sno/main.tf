@@ -20,12 +20,30 @@ resource "libvirt_network" "sno" {
   domain    = "${local.subdomain}"
   addresses = [var.network_cidr]
   dhcp { enabled = false }
+  dns {
+    enabled = true
+    local_only = false
+    #hosts = {
+    #  hostname = "openshift-sno.${local.subdomain}"
+    #  ip       = cidrhost(var.network_cidr, 3)
+    #}
+  }
+  dnsmasq_options {
+    options {
+      option_name  = "address"
+      option_value = "/.api.${local.subdomain}/${cidrhost(var.network_cidr, 3)}"
+    }
+    options {
+      option_name  = "address"
+      option_value = "/*.apps.${local.subdomain}/${cidrhost(var.network_cidr, 3)}"
+    }
+  }
 }
 
 resource "libvirt_domain" "openshift_sno" {
   name   = "openshift-sno"
-  vcpu   = 4
-  memory = 8192
+  vcpu   = 2
+  memory = 6144
 
   disk {
     volume_id = libvirt_volume.openshift_sno_disk.id
@@ -34,7 +52,7 @@ resource "libvirt_domain" "openshift_sno" {
 
   network_interface {
     network_id = libvirt_network.sno.id
-    addresses  = [cidrhost(var.network_cidr, 3)]
+    addresses  = [ cidrhost(var.network_cidr, 3) ]
     wait_for_lease = true
   }
 
