@@ -1,15 +1,22 @@
 resource "libvirt_volume" "openshift_sno_iso" {
-  name   = "rhcos-${var.product}-${var.release_version}.qcow2"
+  name   = "rhcos-${var.product}-${var.release_version}.iso"
   pool   = "default"
   source = "/var/lib/libvirt/images/rhcos-live-${var.product}-${var.release_version}.iso"
-  format = "qcow2"
+  #format = "qcow2"
 }
 
+#resource "libvirt_volume" "openshift_sno_disk" {
+#  name           = "rhcos-${var.product}-${var.release_version}.qcow2"
+#  size           = 32212254720  # 30 GB in bytes
+#  pool           = "default"
+#  base_volume_id = libvirt_volume.openshift_sno_iso.id
+#}
+
 resource "libvirt_volume" "openshift_sno_disk" {
-  name           = "rhcos-${var.product}-${var.release_version}.qcow2"
-  size           = 32212254720  # 30 GB in bytes
-  pool           = "default"
-  base_volume_id = libvirt_volume.openshift_sno_iso.id
+  name   = "sno-${var.product}-${var.release_version}.qcow2"
+  pool   = "default"
+  size   = 120 * 1024 * 1024 * 1024  # 120 GB in bytes
+  format = "qcow2"
 }
 
 resource "libvirt_network" "sno" {
@@ -48,6 +55,14 @@ resource "libvirt_domain" "openshift_sno" {
   disk {
     volume_id = libvirt_volume.openshift_sno_disk.id
     scsi      = "true"
+    }
+
+  disk {
+    file = libvirt_volume.openshift_sno_iso.id
+    }
+
+  boot_device {
+    dev = [ "hd", "cdrom"]
   }
 
   network_interface {
