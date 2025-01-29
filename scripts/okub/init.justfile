@@ -177,7 +177,7 @@ update-install-config:
     # SNO - Single Node install
     if [[ {{ MASTERS }} -eq 1 && {{ WORKERS }} -eq 0 ]]; then 
       SNO=TRUE;
-      yq -i '.bootstrapInPlace.installationDisk = "/dev/sda"' {{OKUB_INSTALL_PATH}}/install-config.yaml;
+      yq -i '.bootstrapInPlace.installationDisk = "/dev/vda"' {{OKUB_INSTALL_PATH}}/install-config.yaml;
     fi
 
     # Internal Registry
@@ -385,23 +385,30 @@ iso:
     set -e
     printf "\e[1;34m[INFO]\e[m Generate iso.\n";
 
+    mkdir -p {{OKUB_INSTALL_PATH}}/cache
+
     if [ -f {{OKUB_INSTALL_PATH}}/agent-config.yaml ]; then
       # Agent Based
       {{OKUB_INSTALL_PATH}}/bin/openshift-install agent create image --dir {{OKUB_INSTALL_PATH}}
     else
         # UPI method
-        if [ ! -f {{OKUB_INSTALL_PATH}}/rhcos-live.iso ]; then
+        if [ ! -f {{OKUB_INSTALL_PATH}}/cache/rhcos-live.iso ]; then
             URL_COREOS_ISO=$({{OKUB_INSTALL_PATH}}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.iso.disk.location)
             printf "\e[1;34m[INFO]\e[m Download ${URL_COREOS_ISO##*/} as rhcos-live.iso\n";
-            curl -L ${URL_COREOS_ISO} -o {{OKUB_INSTALL_PATH}}/rhcos-live.iso
+            curl -L ${URL_COREOS_ISO} -o {{OKUB_INSTALL_PATH}}/cache/rhcos-live.iso
         fi
+
         if [[ {{ MASTERS }} -eq 1 && {{ WORKERS }} -eq 0 ]]; then
             WHICH_IGNITION=bootstrap-in-place-for-live-iso.ign
         else
             WHICH_IGNITION=bootstrap.ign
         fi
+
+        cp -pr {{OKUB_INSTALL_PATH}}/cache/rhcos-live.iso {{OKUB_INSTALL_PATH}}/cache/rhcos-master.iso
+        cp -pr {{OKUB_INSTALL_PATH}}/cache/rhcos-live.iso {{OKUB_INSTALL_PATH}}/cache/rhcos-worker.iso
         export COREOS_INSTALLER="podman run --privileged --pull always --rm -v /dev:/dev -v {{OKUB_INSTALL_PATH}}:/data -w /data quay.io/coreos/coreos-installer:release"
-        ${COREOS_INSTALLER} iso ignition embed -fi "${WHICH_IGNITION}" "rhcos-live.iso"
+        ${COREOS_INSTALLER} iso ignition embed -fi "${WHICH_IGNITION}" "cache/rhcos-master.iso"
+        ${COREOS_INSTALLER} iso ignition embed -fi "worker.ign" "cache/rhcos-worker.iso"
     fi
     printf "\e[1;32m[OK]\e[m RHCOS iso generated with ignition.\n"
 
@@ -419,23 +426,31 @@ pxe:
         URL_COREOS_KERNEL=$({{OKUB_INSTALL_PATH}}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.kernel.location)
         URL_COREOS_INITRAMFS=$({{OKUB_INSTALL_PATH}}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.initramfs.location)
         URL_COREOS_ROOTFS=$({{OKUB_INSTALL_PATH}}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.rootfs.location)
+        URL_COREOS_QCOW2=$({{OKUB_INSTALL_PATH}}/bin/openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.gz"].disk.location')
+
+        # qcow2
+        if [ ! -f {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_QCOW2##*/} ]; then
+        printf "\e[1;34m[INFO]\e[m Download ${URL_COREOS_QCOW2##*/} as rhcos-qemu.x86_64.qcow2.gz\n";
+        curl -L ${URL_COREOS_QCOW2} -o {{OKUB_INSTALL_PATH}}/cache/rhcos-qemu.x86_64.qcow2.gz
+        gunzip -f -d {{OKUB_INSTALL_PATH}}/cache/rhcos-qemu.x86_64.qcow2.gz
+        fi
 
         # Kernel
-        if [ ! -f {{OKUB_INSTALL_PATH}}/${URL_COREOS_KERNEL##*/} ]; then
+        if [ ! -f {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_KERNEL##*/} ]; then
         printf "\e[1;34m[INFO]\e[m Download ${URL_COREOS_KERNEL##*/}\n";
-        curl -L ${URL_COREOS_KERNEL} -o {{OKUB_INSTALL_PATH}}/${URL_COREOS_KERNEL##*/}
+        curl -L ${URL_COREOS_KERNEL} -o {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_KERNEL##*/}
         fi
 
         # Initramfs
-        if [ ! -f {{OKUB_INSTALL_PATH}}/${URL_COREOS_INITRAMFS##*/} ]; then
+        if [ ! -f {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_INITRAMFS##*/} ]; then
         printf "\e[1;34m[INFO]\e[m Download ${URL_COREOS_INITRAMFS##*/}\n";
-        curl -L ${URL_COREOS_INITRAMFS} -o {{OKUB_INSTALL_PATH}}/${URL_COREOS_INITRAMFS##*/}
+        curl -L ${URL_COREOS_INITRAMFS} -o {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_INITRAMFS##*/}
         fi
 
         # Rootfs
-        if [ ! -f {{OKUB_INSTALL_PATH}}/${URL_COREOS_ROOTFS##*/} ]; then
+        if [ ! -f {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_ROOTFS##*/} ]; then
         printf "\e[1;34m[INFO]\e[m Download ${URL_COREOS_ROOTFS##*/}\n";
-        curl -L ${URL_COREOS_ROOTFS} -o {{OKUB_INSTALL_PATH}}/${URL_COREOS_ROOTFS##*/}
+        curl -L ${URL_COREOS_ROOTFS} -o {{OKUB_INSTALL_PATH}}/cache/${URL_COREOS_ROOTFS##*/}
         fi
 
         # Config
@@ -447,14 +462,14 @@ pxe:
 
         if [[ ! {{ DHCP_BOOL }} == "FALSE" ]]; then NETWORK_CONFIG="ip={{INTERFACE}}:dhcp"; fi
 
-    cat > "{{OKUB_INSTALL_PATH}}/pxeboot.conf" <<EOF
-    DEFAULT pxeboot
-    TIMEOUT 20
-    PROMPT 0
-    LABEL pxeboot
-        KERNEL http://{{ PXE_SERVER }}/${URL_COREOS_KERNEL##*/} 
-        APPEND initrd=http://{{ PXE_SERVER }}/${URL_COREOS_INITRAMFS##*/} coreos.live.rootfs_url=http://{{ PXE_SERVER }}/${URL_COREOS_ROOTFS##*/} coreos.inst.install_dev=/dev/sda coreos.inst.ignition_url=http://{{ PXE_SERVER }}/${WHICH_IGNITION} ${NETWORK_CONFIG}
-    EOF
+        cat > "{{OKUB_INSTALL_PATH}}/pxeboot.conf" <<EOF
+        DEFAULT pxeboot
+        TIMEOUT 20
+        PROMPT 0
+        LABEL pxeboot
+            KERNEL http://{{ PXE_SERVER }}/${URL_COREOS_KERNEL##*/} 
+            APPEND initrd=http://{{ PXE_SERVER }}/${URL_COREOS_INITRAMFS##*/} coreos.live.rootfs_url=http://{{ PXE_SERVER }}/${URL_COREOS_ROOTFS##*/} coreos.inst.install_dev=/dev/vda coreos.inst.ignition_url=http://{{ PXE_SERVER }}/${WHICH_IGNITION} ${NETWORK_CONFIG}
+        EOF
 
     fi
     printf "\e[1;32m[OK]\e[m PXE config generated and iso downloaded.\n"
