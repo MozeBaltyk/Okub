@@ -61,7 +61,15 @@ resource "libvirt_network" "okub" {
         ip       = hosts.value.ip
       }
     }
-    
+
+    # Loop to create DNS entries for each etcd
+    dynamic "hosts" {
+      for_each = { for idx, master in local.master_details : idx => master }
+      content {
+        hostname = "etcd-${hosts.key}.${local.subdomain}"
+        ip       = hosts.value.ip
+      }
+    }
     hosts {
       hostname = "api.${local.subdomain}"
       ip       = local.lb_vip
@@ -80,9 +88,13 @@ resource "libvirt_network" "okub" {
     options  {
       option_name = "no-hosts"
     }
-    options {
-      option_name  = "srv-host"
-      option_value = "_etcd-server-ssl._tcp.${local.subdomain},etcd-0.${local.subdomain},2380,0,10"
+    # Loop to create srv-host entries for each master
+    dynamic "options" {
+      for_each = { for idx, master in local.master_details : idx => master }
+      content {
+        option_name  = "srv-host"
+        option_value = "_etcd-server-ssl._tcp.${local.subdomain},etcd-${options.key}.${local.subdomain},2380,0,10"
+      }
     }
     options {
       option_name  = "address"
@@ -94,8 +106,8 @@ resource "libvirt_network" "okub" {
 resource "libvirt_domain" "master" {
   for_each = { for idx, master in local.master_details : idx => master }
   name   = each.value.name
-  vcpu   = 2
-  memory = 6144
+  vcpu   = 4
+  memory = 8 * 1024
 
   disk {
     volume_id = libvirt_volume.master_disk[each.key].id
