@@ -107,7 +107,7 @@ resource "libvirt_domain" "master" {
   for_each = { for idx, master in local.master_details : idx => master }
   name   = each.value.name
   vcpu   = 4
-  memory = 8 * 1024
+  memory = 16 * 1024
 
   disk {
     volume_id = libvirt_volume.master_disk[each.key].id
@@ -148,8 +148,8 @@ resource "libvirt_domain" "master" {
 resource "libvirt_domain" "worker" {
   for_each = { for idx, worker in local.worker_details : idx => worker }
   name   = each.value.name
-  vcpu   = 2
-  memory = 6144
+  vcpu   = 4
+  memory = 16 * 1024
 
   disk {
     volume_id = libvirt_volume.worker_disk[each.key].id
