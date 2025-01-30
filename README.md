@@ -105,6 +105,10 @@ https://github.com/cgruver/kamarotos/blob/main/agent-install.md
 
 https://github.com/jmutai/ocp4_ansible
 
+https://github.com/lgchiaretto/ocp4_setup_upi_kvm_ansible/tree/master
+
+https://fajlinuxblog.medium.com/openshift-running-as-single-node-with-libvirt-kvm-cb615d2c43e6
+
 * Vsphere
 
 https://guifreelife.com/blog/2022/05/13/OpenShift-Virtualization-on-vSphere/

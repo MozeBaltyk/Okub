@@ -1,7 +1,6 @@
 set shell := ["bash", "-uc"]
 # Ref: https://github.com/ryanhay/ocp4-metal-install?tab=readme-ov-file#download-software
 
-HELPER_HOSTNAME    :=  env_var_or_default('HELPER_HOSTNAME', "helper")
 # MANDATORY
 PRODUCT            :=  env_var_or_default('PRODUCT', "okd")
 RELEASE_VERSION    :=  env_var_or_default('RELEASE_VERSION', "latest")
@@ -12,10 +11,10 @@ MASTERS            :=  env_var_or_default('MASTERS', "1")
 WORKERS            :=  env_var_or_default('WORKERS', "0")
 DHCP_BOOL          :=  env_var_or_default('DHCP_BOOL', "FALSE")
 LB_BOOL            :=  env_var_or_default('LB_BOOL', "FALSE")
+MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.100.0/24")
 # IF LB_BOOL is FALSE
 APIVIP             :=  env_var_or_default('APIVIP', "192.168.100.100")
 INGRESSVIP         :=  env_var_or_default('INGRESSVIP', "192.168.100.110")
-MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.100.0/24")
 # IF INTERNAL_REGISTRY defined
 INTERNAL_REGISTRY  :=  env_var_or_default('INTERNAL_REGISTRY', "")
 # IF `just init pxe`
@@ -25,14 +24,14 @@ RENDEZVOUS_IP      :=  env_var_or_default('RENDEZVOUS_IP', "192.168.100.9")
 # STATIC NETWORK if DHCP_BOOL is FALSE
 MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', '"52:54:00:35:fc:d8", "52:54:00:4f:12:5a", "52:54:00:e2:19:9d"')
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', '"52:54:00:9a:7b:66", "52:54:00:5b:ec:b3"')
-MACADRESS_BOOTSTRAP:=  env_var_or_default('MACADRESS_BOOTSTRAP', "52:54:00:c5:d3:5f")
 IP_MASTERS         :=  env_var_or_default('IP_MASTERS', "192.168.100.10 192.168.100.11 192.168.100.12")
 IP_WORKERS         :=  env_var_or_default('IP_WORKERS', "192.168.100.20 192.168.100.21")
 INTERFACE          :=  env_var_or_default('INTERFACE', "eno1")
 GATEWAY            :=  env_var_or_default('GATEWAY', "192.168.100.1")
 DNS_SERVER         :=  env_var_or_default('DNS_SERVER', "192.168.100.3")
 NETMASK            :=  env_var_or_default('NETMASK', "255.255.255.0")
-
+# IF VM HELPER is needed
+HELPER_HOSTNAME    :=  env_var_or_default('HELPER_HOSTNAME', "helper")
 
 # Generate a MAC adddress
 generate_mac:
@@ -69,7 +68,6 @@ helper_create:
       -var "workers_number={{ WORKERS }}" \
       -var "masters_mac_addresses={{ MACADRESS_MASTERS }}" \
       -var "workers_mac_addresses={{ MACADRESS_WORKERS }}" \
-      -var "bootstrap_mac_address={{ MACADRESS_BOOTSTRAP }}" \
       ;
     cd ../../libvirt/helper && tofu apply "terraform.tfplan";
 
@@ -87,7 +85,6 @@ helper_destroy:
       -var "workers_number={{ WORKERS }}" \
       -var "masters_mac_addresses={{ MACADRESS_MASTERS }}" \
       -var "workers_mac_addresses={{ MACADRESS_WORKERS }}" \
-      -var "bootstrap_mac_address={{ MACADRESS_BOOTSTRAP }}" \
       ;
 
 # Deploy OCP on libvirtd
@@ -129,7 +126,3 @@ ocp_destroy:
       -var 'masters_mac_addresses=[{{ MACADRESS_MASTERS }}]' \
       -var 'workers_mac_addresses=[{{ MACADRESS_WORKERS }}]' \
       ;
-
-# https://fajlinuxblog.medium.com/openshift-running-as-single-node-with-libvirt-kvm-cb615d2c43e6
-# https://www.itix.fr/blog/deploy-openshift-single-node-in-kvm/
-# https://github.com/lgchiaretto/ocp4_setup_upi_kvm_ansible/tree/master

@@ -1,0 +1,67 @@
+variable "product" {
+  description = "Product name for the ISO"
+  type        = string
+}
+
+variable "release_version" {
+  description = "Release version for the ISO"
+  type        = string
+}
+
+variable "network_cidr" {
+  description = "Network CIDR"
+  type        = string
+}
+
+variable "clusterid" {
+  description = "Cluster ID"
+  type        = string
+}
+
+variable "domain" {
+  description = "Domain name"
+  type        = string
+}
+
+variable "masters_number" {
+  description = "Number of Masters"
+  type        = number
+}
+
+variable "workers_number" {
+  description = "Number of Workers"
+  type        = number
+}
+
+variable "masters_mac_addresses" {
+  description = "Masters MAC addresses"
+  type    = list(string)
+}
+
+variable "workers_mac_addresses" {
+  description = "Workers MAC addresses"
+  type    = list(string)
+}
+
+variable "okub_install_path" {
+  description = "Path to the OKUB installation directory"
+  type    = string
+}
+
+# Set locally
+locals {
+  subdomain = "${var.clusterid}.${var.domain}"
+  master_details = tolist([
+    for m in range(var.masters_number) : {
+      name = format("master%02d", m + 1)
+      ip   = cidrhost(var.network_cidr, m + 10)
+      mac  = var.masters_mac_addresses[m]
+    }])
+  worker_details = tolist([
+    for w in range(var.workers_number) : {
+      name = format("worker%02d", w + 1)
+      ip   = cidrhost(var.network_cidr, w + 20)
+      mac  = var.workers_mac_addresses[w]
+    }])
+  lb_vip = var.masters_number == 1 ? local.master_details[0].ip : cidrhost(var.network_cidr, 3)
+}

@@ -23,7 +23,6 @@ RENDEZVOUS_IP      :=  env_var_or_default('RENDEZVOUS_IP', "192.168.100.9")
 # STATIC NETWORK if DHCP_BOOL is FALSE
 MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', "52:54:00:35:fc:d8 52:54:00:4f:12:5a 52:54:00:e2:19:9d")
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', "52:54:00:9a:7b:66 52:54:00:5b:ec:b3")
-MACADRESS_BOOTSTRAP:=  env_var_or_default('MACADRESS_BOOTSTRAP', "52:54:00:c5:d3:5f")
 IP_MASTERS         :=  env_var_or_default('IP_MASTERS', "192.168.100.10 192.168.100.11 192.168.100.12")
 IP_WORKERS         :=  env_var_or_default('IP_WORKERS', "192.168.100.20 192.168.100.21")
 INTERFACE          :=  env_var_or_default('INTERFACE', "eno1")
@@ -484,5 +483,6 @@ wait level:
       {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} agent wait-for install-complete --log-level={{level}}
     else
        # SNO and other type of install 
+       {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for bootstrap-complete --log-level={{level}}
        {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for install-complete --log-level={{level}}
     fi

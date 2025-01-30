@@ -14,7 +14,7 @@ _help:
     @printf "MANDATORY VARIABLES\n"
     @printf "     PRODUCT = okd\n"
     @printf "     RELEASE_VERSION = latest\n"
-    @printf "     OKUB_INSTALL_PATH = $HOME/okd-latest\n"
+    @printf "     OKUB_INSTALL_PATH = \$HOME/okd-latest\n"
     @printf "     DOMAIN = example.com\n"
     @printf "     CLUSTER_NAME = okub\n"
     @printf "     MASTERS = 1\n"
