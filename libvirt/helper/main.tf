@@ -42,7 +42,6 @@ data "template_file" "user_data" {
     ipid = local.ipid
     master_details = indent(8, yamlencode(local.master_details))
     worker_details   = indent(8, yamlencode(local.worker_details))
-    bootstrap_details = indent(8, yamlencode(local.bootstrap_details))
     public_key = tls_private_key.global_key.public_key_openssh
     rh_username = var.rh_username
     rh_password = var.rh_password

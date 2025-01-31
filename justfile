@@ -67,18 +67,13 @@ helper SUPPORT:
 check THAT:
     @just -f scripts/okub/checks.justfile {{ THAT }}
 
-# Generate Manifest and produce iso or pxeboot for OKD or OCP install ["iso"|"pxe"|""]
+# Generate iso or pxeboot for OKD or OCP install (if args left empty, generate only manifests) ["iso"|"pxe"|""]
 init *OUTCOME:
-    @just -f scripts/okub/init.justfile binaries
-    @just -f scripts/okub/init.justfile keys
-    @just -f scripts/okub/init.justfile install-config
-    @just -f scripts/okub/init.justfile agent-config
-    @just -f scripts/okub/init.justfile platform
-    @just -f scripts/okub/init.justfile update-install-config
-    @just -f scripts/okub/init.justfile update-agent-config
-    @just -f scripts/okub/init.justfile saved
-    @just -f scripts/okub/init.justfile manifest
-    @if [[ "{{OUTCOME}}" != "" ]]; then just -f scripts/okub/init.justfile {{OUTCOME}}; fi
+    @just -f scripts/okub/init.justfile ocp_init_create {{OUTCOME}}
+
+# Remove OKD/OCP install
+reset:
+    @just -f scripts/okub/init.justfile ocp_init_destroy
 
 # Watch and Wait for OKD/OCP install to complete at the wanted log LEVEL (default: info) 
 wait LEVEL="info":

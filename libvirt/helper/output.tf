@@ -8,7 +8,6 @@ resource "local_file" "ansible_inventory" {
       helper_hostname = var.hostname,
       master_details = local.master_details,
       worker_details = local.worker_details,
-      bootstrap_details = local.bootstrap_details
     }
   )
   filename = "../inventory/hosts.ini"
@@ -21,18 +20,6 @@ output "ips" {
   value = libvirt_domain.helper.*.network_interface.0.addresses
 }
 
-# output "master_details" {
-#   value = local.master_details
-# }
-# 
-# output "worker_details" {
-#   value = local.worker_details
-# }
-# 
-# output "bootstrap_details" {
-#   value = local.bootstrap_details
-# }
-# 
 # output "rendered_cloud_init" {
 #   value = data.template_file.user_data.rendered
 # }

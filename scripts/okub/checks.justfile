@@ -76,6 +76,20 @@ FIREWALL:
     set -e
     printf "\e[1;34m[INFO]\e[m Checks FIREWALL:\n";
 
+# Watch and Wait for OKD/OCP install to complete
+wait level:
+    #!/usr/bin/env bash
+    set -e
+    if [ -f {{OKUB_INSTALL_PATH}}/saved/agent-install.yaml ]; then
+       # Agent based install
+      {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} agent wait-for bootstrap-complete --log-level={{level}}
+      {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} agent wait-for install-complete --log-level={{level}}
+    else
+       # SNO and other type of install 
+       {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for bootstrap-complete --log-level={{level}}
+       {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for install-complete --log-level={{level}}
+    fi
+
 # Checks all
 ALL:
     #!/usr/bin/env bash

@@ -67,7 +67,6 @@ variable "cpu" { default = 2 }
 variable "timezone" { default = "Europe/Paris" }
 variable "masters_number" { default = 3 }
 variable "workers_number" { default = 2 }
-variable "bootstrap_mac_addresses" { default = "52:54:00:c5:d3:5f" }
 variable "masters_mac_addresses" {
   type    = list(string)
   default = ["52:54:00:36:14:e5", "52:54:00:36:14:e6", "52:54:00:36:14:e7"]
@@ -82,7 +81,6 @@ locals {
   qcow2_image = lookup(var.Versionning[var.selected_version], "os_URL", "")
   cloud_init_version = lookup(var.Versionning[var.selected_version], "cloud-init_version", 0)
   subdomain = "${var.clusterid}.${var.domain}"
-  bootstrap_ip = cidrhost(var.network_cidr, 7)
   gateway_ip = cidrhost(var.network_cidr, 1)
   broadcast_ip = cidrhost(var.network_cidr, -1)
   netmask = cidrnetmask(var.network_cidr)
@@ -104,10 +102,5 @@ locals {
       name = format("worker%02d", b + 1)
       ip   = cidrhost(var.network_cidr, b + 20)
       mac  = var.workers_mac_addresses[b]
-    }])
-  bootstrap_details = tolist([{
-      name = format("bootstrap%02d", 1)
-      ip   = cidrhost(var.network_cidr, 7)
-      mac  = var.bootstrap_mac_addresses
     }])
 }

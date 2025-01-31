@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -e
+
+OKUB_INSTALL_PATH=${okub_install_path}
+MASTERS=${masters_number}
+WORKERS=${workers_number}
+DHCP_BOOL=${dhcp_bool}
+INTERFACE=${network_interface}
+PXE_SERVER=${pxe_server_ip}
+
+printf "\e[1;34m[INFO]\e[m Generate PXE boot files\n";
+
+if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
+    # Agent Based 
+    $${OKUB_INSTALL_PATH}/bin/openshift-install agent create pxe-files --dir $${OKUB_INSTALL_PATH}
+else
+    # UPI method
+    URL_COREOS_KERNEL=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.kernel.location)
+    URL_COREOS_INITRAMFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.initramfs.location)
+    URL_COREOS_ROOTFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.rootfs.location)
+    URL_COREOS_QCOW2=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.gz"].disk.location')
+
+    # qcow2
+    if [ ! -f $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_QCOW2##*/} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_QCOW2##*/} as rhcos-qemu.x86_64.qcow2.gz\n";
+    curl -Ls $${URL_COREOS_QCOW2} -o $${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.gz
+    gunzip -f -d $${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.gz
+    fi
+
+    # Kernel
+    if [ ! -f $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_KERNEL##*/} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_KERNEL##*/}\n";
+    curl -Ls $${URL_COREOS_KERNEL} -o $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_KERNEL##*/}
+    fi
+
+    # Initramfs
+    if [ ! -f $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_INITRAMFS##*/} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_INITRAMFS##*/}\n";
+    curl -Ls $${URL_COREOS_INITRAMFS} -o $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_INITRAMFS##*/}
+    fi
+
+    # Rootfs
+    if [ ! -f $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_ROOTFS##*/} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_ROOTFS##*/}\n";
+    curl -Ls $${URL_COREOS_ROOTFS} -o $${OKUB_INSTALL_PATH}/cache/$${URL_COREOS_ROOTFS##*/}
+    fi
+
+    # Config
+    if [ $${MASTERS} -eq 1 ] && [ $${WORKERS} -eq 0 ]; then
+        WHICH_IGNITION=bootstrap-in-place-for-live-iso.ign
+    else
+        WHICH_IGNITION=bootstrap.ign
+    fi
+
+    if [ "$${DHCP_BOOL}" != "false" ]; then NETWORK_CONFIG="ip=$${INTERFACE}:dhcp"; fi
+
+    cat > "$${OKUB_INSTALL_PATH}/pxeboot.conf" <<EOF
+DEFAULT pxeboot
+TIMEOUT 20
+PROMPT 0
+LABEL pxeboot
+    KERNEL http://$${PXE_SERVER}/$${URL_COREOS_KERNEL##*/} 
+    APPEND initrd=http://$${PXE_SERVER}/$${URL_COREOS_INITRAMFS##*/} coreos.live.rootfs_url=http://$${PXE_SERVER}/$${URL_COREOS_ROOTFS##*/} coreos.inst.install_dev=/dev/vda coreos.inst.ignition_url=http://$${PXE_SERVER}/$${WHICH_IGNITION} $${NETWORK_CONFIG}
+EOF
+
+fi
+printf "\e[1;32m[OK]\e[m PXE config generated and iso downloaded.\n"

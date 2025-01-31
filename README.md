@@ -68,7 +68,7 @@ Take also into account in the `install-config.yaml` the platform arguments which
 
 - DHCP = DHCP server.
 
-- PXE server = HTTPD server.
+- PXE server = TFTP server.
 
 - Loadbalancer = HAproxy server.
 
@@ -83,6 +83,46 @@ Take also into account in the `install-config.yaml` the platform arguments which
 1. Clone this project
 ```sh
 git clone https://github.com/mozebaltyk/Okub.git
+```
+
+* create a helper if needed
+
+* init a project 
+
+* deploy on KVM
+
+
+## Troubleshootings
+
+Few tips to troubleshoot:
+
+```bash
+cd ${OKUB_INSTALL_PATH}
+export KUBECONFIG=./auth/kubeconfig
+# Agent based install
+${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} agent wait-for bootstrap-complete --log-level={{level}}
+${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} agent wait-for install-complete --log-level={{level}}
+# SNO and other type of install 
+${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} wait-for bootstrap-complete --log-level={{level}}
+${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} wait-for install-complete --log-level={{level}}
+
+/bin/oc get co
+
+# Connect in ssh to first master node
+journalctl -u bootkube --no-pager | tail -50
+journalctl -u kubelet --no-pager | tail -50
+
+systemctl status bootkube -l
+systemctl status kubelet -l
+
+# Check if the certificate is still valid
+[ $(cat auth/kubeconfig | yq '.clusters[].cluster."certificate-authority-data"' | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ] && echo OK || echo NOK
+```
+
+After first reboot, fs should be setup:
+
+```bash
+lsblk
 ```
 
 ## References

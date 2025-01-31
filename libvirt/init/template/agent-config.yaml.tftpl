@@ -1,6 +1,65 @@
----
+--- 
 apiVersion: v1alpha1
 kind: AgentConfig
 metadata:
-  name: ocp-cluster
-rendezvousIP: 192.168.111.80
+  name: ${clusterid}
+rendezvousIP: ${rendezvous_ip}
+%{ if dhcp_bool == false ~}
+hosts:
+%{ for master in master_details ~}
+  - hostname: "${master.name}"
+    role: "master"
+    interfaces:
+      - name: "${network_interface}"
+        macAddress: "${master.mac}"
+    networkConfig:
+      interfaces:
+        - name: "${network_interface}"
+          type: "ethernet"
+          state: "up"
+          mac-address: "${master.mac}"
+          ipv4:
+            enabled: true
+            address:
+              - ip: "${master.ip}"
+                prefix-length: 23
+            dhcp: false
+      dns-resolver:
+        config:
+          server: ["${dns_server_ip}"]
+      routes:
+        config:
+          - destination: "0.0.0.0/0"
+            next-hop-address: "${gateway_ip}"
+            next-hop-interface: "${network_interface}"
+            table-id: "254"
+%{ endfor ~}
+%{ for worker in worker_details ~}
+  - hostname: "${worker.name}"
+    role: "worker"
+    interfaces:
+      - name: "${network_interface}"
+        macAddress: "${worker.mac}"
+    networkConfig:
+      interfaces:
+        - name: "${network_interface}"
+          type: "ethernet"
+          state: "up"
+          mac-address: "${worker.mac}"
+          ipv4:
+            enabled: true
+            address:
+              - ip: "${worker.ip}"
+                prefix-length: 23
+            dhcp: false
+      dns-resolver:
+        config:
+          server: ["${dns_server_ip}"]
+      routes:
+        config:
+          - destination: "0.0.0.0/0"
+            next-hop-address: "${gateway_ip}"
+            next-hop-interface: "${network_interface}"
+            table-id: "254"
+%{ endfor ~}
+%{ endif ~}

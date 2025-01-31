@@ -12,6 +12,7 @@ resource "tls_private_key" "global_key" {
 resource "local_file" "ssh_public_key" {
   filename = "${var.okub_install_path}/.ssh/key.pub"
   content  = tls_private_key.global_key.public_key_openssh
+  file_permission = "0600"
 }
 
 # Save the private key to a local file
