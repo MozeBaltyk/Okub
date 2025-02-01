@@ -104,25 +104,17 @@ resource "local_file" "agent-config" {
   }
 }
 
-# Generate manifests 
+# Generate manifests (only for SNO since no agent-config.yaml)
 resource "null_resource" "generate_manifest" {
   depends_on = [local_file.install-config, local_file.agent-config]
-
+  count = local.sno_install ? 1 : 0
   provisioner "local-exec" {
+    quiet = true
     command = <<EOT
-    if [ ! -f ${var.okub_install_path}/agent-config.yaml ]; then
       # Create Manifest (needed for SNO since no agent-config.yaml)
       ${var.okub_install_path}/bin/openshift-install create manifests --dir ${var.okub_install_path}
-
       # Ignition
-      if [[ ${var.masters_number} -eq 1 && ${var.workers_number} -eq 0 ]]; then
-        SNO=TRUE;
-        ${var.okub_install_path}/bin/openshift-install create single-node-ignition-config --dir ${var.okub_install_path}
-      else
-        # This one should never happen since either agent based or SNO install
-        ${var.okub_install_path}/bin/openshift-install create ignition-configs --dir ${var.okub_install_path}
-      fi
-    fi
+      ${var.okub_install_path}/bin/openshift-install create single-node-ignition-config --dir ${var.okub_install_path}
     EOT
   }
 }

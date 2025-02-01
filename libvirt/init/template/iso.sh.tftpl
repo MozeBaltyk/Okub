@@ -24,9 +24,9 @@ else
       WHICH_IGNITION=bootstrap.ign
   fi
   cp -pr $${OKUB_INSTALL_PATH}/cache/rhcos-live.iso $${OKUB_INSTALL_PATH}/cache/rhcos-master.iso
-  cp -pr $${OKUB_INSTALL_PATH}/cache/rhcos-live.iso $${OKUB_INSTALL_PATH}/cache/rhcos-worker.iso
+  #cp -pr $${OKUB_INSTALL_PATH}/cache/rhcos-live.iso $${OKUB_INSTALL_PATH}/cache/rhcos-worker.iso
   export COREOS_INSTALLER="podman run --privileged --pull always --rm -v /dev:/dev -v $${OKUB_INSTALL_PATH}:/data -w /data quay.io/coreos/coreos-installer:release"
-  $${COREOS_INSTALLER} iso ignition embed -fi "$${WHICH_IGNITION}" "$${OKUB_INSTALL_PATH}/cache/rhcos-master.iso"
-  $${COREOS_INSTALLER} iso ignition embed -fi "$${OKUB_INSTALL_PATH}/worker.ign" "$${OKUB_INSTALL_PATH}/cache/rhcos-worker.iso"
+  $${COREOS_INSTALLER} iso ignition embed -fi "$${WHICH_IGNITION}" "cache/rhcos-master.iso"
+  #$${COREOS_INSTALLER} iso ignition embed -fi "worker.ign" "cache/rhcos-worker.iso"
 fi
 printf "\e[1;32m[OK]\e[m RHCOS iso generated with ignition.\n"
