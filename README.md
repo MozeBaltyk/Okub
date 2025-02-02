@@ -85,11 +85,11 @@ Take also into account in the `install-config.yaml` the platform arguments which
 git clone https://github.com/mozebaltyk/Okub.git
 ```
 
+* init a project
+
 * create a helper if needed
 
-* init a project 
-
-* deploy on KVM
+* deploy OCP/OKD on KVM
 
 
 ## Troubleshootings
@@ -100,11 +100,11 @@ Few tips to troubleshoot:
 cd ${OKUB_INSTALL_PATH}
 export KUBECONFIG=./auth/kubeconfig
 # Agent based install
-${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} agent wait-for bootstrap-complete --log-level={{level}}
-${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} agent wait-for install-complete --log-level={{level}}
+./bin/openshift-install --dir . agent wait-for bootstrap-complete --log-level=info
+./bin/openshift-install --dir . agent wait-for install-complete --log-level=info
 # SNO and other type of install 
-${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} wait-for bootstrap-complete --log-level={{level}}
-${OKUB_INSTALL_PATH}/bin/openshift-install --dir ${OKUB_INSTALL_PATH} wait-for install-complete --log-level={{level}}
+./bin/openshift-install --dir . wait-for bootstrap-complete --log-level=info
+./bin/openshift-install --dir . wait-for install-complete --log-level=info
 
 /bin/oc get co
 

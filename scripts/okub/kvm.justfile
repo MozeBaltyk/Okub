@@ -9,8 +9,8 @@ DOMAIN             :=  env_var_or_default('DOMAIN', 'example.com')
 CLUSTER_NAME       :=  env_var_or_default('CLUSTER_NAME', 'okub')
 MASTERS            :=  env_var_or_default('MASTERS', "1")
 WORKERS            :=  env_var_or_default('WORKERS', "0")
-DHCP_BOOL          :=  env_var_or_default('DHCP_BOOL', "FALSE")
-LB_BOOL            :=  env_var_or_default('LB_BOOL', "FALSE")
+DHCP_BOOL          :=  env_var_or_default('DHCP_BOOL', "false")
+LB_BOOL            :=  env_var_or_default('LB_BOOL', "false")
 MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.100.0/24")
 # IF INTERNAL_REGISTRY defined
 INTERNAL_REGISTRY  :=  env_var_or_default('INTERNAL_REGISTRY', "")
@@ -79,10 +79,9 @@ ocp_create:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m OCP install \n";
-    sudo cp {{OKUB_INSTALL_PATH}}/cache/rhcos-master.iso /var/lib/libvirt/images/rhcos-master-{{PRODUCT}}-{{RELEASE_VERSION}}.iso
-    sudo cp {{OKUB_INSTALL_PATH}}/cache/rhcos-worker.iso /var/lib/libvirt/images/rhcos-worker-{{PRODUCT}}-{{RELEASE_VERSION}}.iso
+    sudo cp {{OKUB_INSTALL_PATH}}/cache/rhcos-master.iso /var/lib/libvirt/images/rhcos-master-{{PRODUCT}}-{{RELEASE_VERSION}}.iso;
+    sudo cp {{OKUB_INSTALL_PATH}}/cache/rhcos-worker.iso /var/lib/libvirt/images/rhcos-worker-{{PRODUCT}}-{{RELEASE_VERSION}}.iso;
     printf "\e[1;34m[INFO]\e[m Create a VM from qcow2 \n";
-
     cd ../../libvirt/ocp && tofu init;
     cd ../../libvirt/ocp && tofu plan -out=terraform.tfplan \
       -var "product={{ PRODUCT }}" \

@@ -76,6 +76,14 @@ FIREWALL:
     set -e
     printf "\e[1;34m[INFO]\e[m Checks FIREWALL:\n";
 
+# Checks all
+ALL:
+    #!/usr/bin/env bash
+    just -f checks.justfile DNS
+    just -f checks.justfile DHCP
+    just -f checks.justfile LOADBALANCER
+    just -f checks.justfile FIREWALL
+
 # Watch and Wait for OKD/OCP install to complete
 wait level:
     #!/usr/bin/env bash
@@ -89,11 +97,3 @@ wait level:
        {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for bootstrap-complete --log-level={{level}}
        {{OKUB_INSTALL_PATH}}/bin/openshift-install --dir {{OKUB_INSTALL_PATH}} wait-for install-complete --log-level={{level}}
     fi
-
-# Checks all
-ALL:
-    #!/usr/bin/env bash
-    just -f checks.justfile DNS
-    just -f checks.justfile DHCP
-    just -f checks.justfile LOADBALANCER
-    just -f checks.justfile FIREWALL

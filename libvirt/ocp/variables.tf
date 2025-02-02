@@ -43,6 +43,16 @@ variable "workers_mac_addresses" {
   type    = list(string)
 }
 
+variable "dhcp_bool" {
+  description = "DHCP enabled or not"
+  type        = bool
+}
+
+variable "lb_bool" {
+  description = "Load balancer enabled or not"
+  type        = bool
+}
+
 # Set locally
 locals {
   subdomain = "${var.clusterid}.${var.domain}"

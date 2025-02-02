@@ -11,15 +11,11 @@ WORKERS            :=  env_var_or_default('WORKERS', "0")
 DHCP_BOOL          :=  env_var_or_default('DHCP_BOOL', "false")
 LB_BOOL            :=  env_var_or_default('LB_BOOL', "false")
 HELPER_BOOL        :=  env_var_or_default('HELPER_BOOL', "false")
-# IF LB_BOOL is FALSE
+# IF LB_BOOL is false
 MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.100.0/24")
 # IF INTERNAL_REGISTRY defined
 INTERNAL_REGISTRY  :=  env_var_or_default('INTERNAL_REGISTRY', "")
-# IF `just init pxe`
-PXE_SERVER         :=  env_var_or_default('PXE_SERVER', `hostname -i`)
-# IF MASTERS greater or equal to 3 (give one of the master's ip)
-RENDEZVOUS_IP      :=  env_var_or_default('RENDEZVOUS_IP', "192.168.100.9")
-# STATIC NETWORK if DHCP_BOOL is FALSE
+# STATIC NETWORK if DHCP_BOOL is false
 MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', '"52:54:00:35:fc:d8", "52:54:00:4f:12:5a", "52:54:00:e2:19:9d"')
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', '"52:54:00:9a:7b:66", "52:54:00:5b:ec:b3"')
 INTERFACE          :=  env_var_or_default('INTERFACE', "ens3")
