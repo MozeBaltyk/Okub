@@ -19,6 +19,7 @@ MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', '"52:54:00:35:fc:
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', '"52:54:00:9a:7b:66", "52:54:00:5b:ec:b3"')
 # IF VM HELPER is needed
 HELPER_HOSTNAME    :=  env_var_or_default('HELPER_HOSTNAME', "helper")
+TYPE_OF_INSTALL    :=  env_var_or_default('TYPE_OF_INSTALL', "iso")
 
 # Generate a MAC adddress
 generate_mac:
@@ -79,8 +80,6 @@ ocp_create:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m OCP install \n";
-    sudo cp {{OKUB_INSTALL_PATH}}/cache/rhcos-master.iso /var/lib/libvirt/images/rhcos-master-{{PRODUCT}}-{{RELEASE_VERSION}}.iso;
-    sudo cp {{OKUB_INSTALL_PATH}}/cache/rhcos-worker.iso /var/lib/libvirt/images/rhcos-worker-{{PRODUCT}}-{{RELEASE_VERSION}}.iso;
     printf "\e[1;34m[INFO]\e[m Create a VM from qcow2 \n";
     cd ../../libvirt/ocp && tofu init;
     cd ../../libvirt/ocp && tofu plan -out=terraform.tfplan \
@@ -95,6 +94,8 @@ ocp_create:
       -var 'workers_mac_addresses=[{{ MACADRESS_WORKERS }}]' \
       -var "dhcp_bool={{ DHCP_BOOL }}" \
       -var "lb_bool={{ LB_BOOL }}" \
+      -var "okub_install_path={{OKUB_INSTALL_PATH}}" \
+      -var "type={{ TYPE_OF_INSTALL }}" \
       ;
     cd ../../libvirt/ocp && tofu apply "terraform.tfplan";
 
@@ -115,4 +116,5 @@ ocp_destroy:
       -var 'workers_mac_addresses=[{{ MACADRESS_WORKERS }}]' \
       -var "dhcp_bool={{ DHCP_BOOL }}" \
       -var "lb_bool={{ LB_BOOL }}" \
+      -var "type={{ TYPE_OF_INSTALL }}" \
       ;

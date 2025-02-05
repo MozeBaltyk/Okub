@@ -30,14 +30,13 @@ platform:
     ingressVIPs: 
     - ${ingress_vip}
 %{ if dhcp_bool == false && lb_bool == false ~}
-%{ for master in master_details ~}
     hosts:
+%{ for master in master_details ~}
     - name: "${master.name}"
       role: "master"
       bootMACAddress: "${master.mac}"
 %{ endfor ~}
 %{ for worker in worker_details ~}
-    hosts:
     - name: "${worker.name}"
       role: "master"
       bootMACAddress: "${worker.mac}"

@@ -53,8 +53,22 @@ variable "lb_bool" {
   type        = bool
 }
 
+variable "type" {
+  description = "Type of installation (e.g., pxe, iso)"
+  type        = string
+  default     = "iso"
+}
+
+variable "okub_install_path" {
+  description = "OKUB install path"
+  type        = string
+  default = "/var/lib/libvirt/images"
+}
+
 # Set locally
 locals {
+  okub_pool_path = "${var.okub_install_path}/pool"
+  okub_cache_path = "${var.okub_install_path}/cache"
   subdomain = "${var.clusterid}.${var.domain}"
   master_details = tolist([
     for m in range(var.masters_number) : {

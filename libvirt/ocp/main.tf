@@ -1,23 +1,35 @@
+### Pool
+resource "libvirt_pool" "okub" {
+  name = "okub"
+  type = "dir"
+  target {
+    path = "/srv/okub"
+  }
+}
+
+### ISO
 # Define libvirt iso volumes for master nodes
 resource "libvirt_volume" "openshift_master_iso" {
+  count  = var.type == "iso" ? 1 : 0
   name   = "${var.clusterid}-master-${var.product}-${var.release_version}.iso"
-  pool   = "default"
-  source = "/var/lib/libvirt/images/rhcos-master-${var.product}-${var.release_version}.iso"
+  pool   = libvirt_pool.okub.name
+  source = "${local.okub_cache_path}/rhcos-master.iso"
 }
 
 # Define libvirt iso volumes for worker nodes
 resource "libvirt_volume" "openshift_worker_iso" {
+  count  = var.type == "iso" ? 1 : 0
   name   = "${var.clusterid}-worker-${var.product}-${var.release_version}.iso"
-  pool   = "default"
-  source = "/var/lib/libvirt/images/rhcos-worker-${var.product}-${var.release_version}.iso"
+  pool   = libvirt_pool.okub.name
+  source = "${local.okub_cache_path}/rhcos-worker.iso"
 }
 
+### Disks
 # Define libvirt volumes for master nodes
 resource "libvirt_volume" "master_disk" {
   for_each = { for idx, master in local.master_details : idx => master }
-
   name   = "${each.value.name}-disk-${var.product}-${var.release_version}.qcow2"
-  pool   = "default"
+  pool   = libvirt_pool.okub.name
   size   = 120 * 1024 * 1024 * 1024  # 120 GB in bytes
   format = "qcow2"
 }
@@ -25,12 +37,38 @@ resource "libvirt_volume" "master_disk" {
 # Define libvirt volumes for worker nodes
 resource "libvirt_volume" "worker_disk" {
   for_each = { for idx, worker in local.worker_details : idx => worker }
-
   name   = "${each.value.name}-disk-${var.product}-${var.release_version}.qcow2"
-  pool   = "default"
+  pool   = libvirt_pool.okub.name
   size   = 120 * 1024 * 1024 * 1024  # 120 GB in bytes
   format = "qcow2"
 }
+
+### PXE 
+resource "libvirt_volume" "kernel" {
+  count  = var.type == "pxe" ? 1 : 0
+  source = "${var.okub_install_path}/boot-artifacts/agent.x86_64-vmlinuz"
+  name   = "kernel"
+  pool   = libvirt_pool.okub.name
+  format = "raw"
+}
+
+resource "libvirt_volume" "rootfs" {
+  count  = var.type == "pxe" ? 1 : 0
+  source = "${var.okub_install_path}/boot-artifacts/agent.x86_64-rootfs.img"
+  name   = "rootfs"
+  pool   = libvirt_pool.okub.name
+  format = "raw"
+}
+
+resource "libvirt_volume" "initrd" {
+  count  = var.type == "pxe" ? 1 : 0
+  source = "${var.okub_install_path}/boot-artifacts/agent.x86_64-initrd.img"
+  name   = "initrd"
+  pool   = libvirt_pool.okub.name
+  format = "raw"
+}
+
+### Networks
 
 resource "libvirt_network" "okub" {
   name      = "okub"
@@ -104,7 +142,7 @@ resource "libvirt_network" "okub" {
 }
 
 resource "libvirt_domain" "master" {
-  for_each = { for idx, master in local.master_details : idx => master }
+  for_each = var.type == "iso" ? { for idx, master in local.master_details : idx => master } : {}
   name   = each.value.name
   vcpu   = 4
   memory = 16 * 1024
@@ -114,7 +152,7 @@ resource "libvirt_domain" "master" {
   }
 
   disk {
-    file = libvirt_volume.openshift_master_iso.id
+    file = libvirt_volume.openshift_master_iso[0].id
   }
 
   boot_device {
@@ -146,7 +184,7 @@ resource "libvirt_domain" "master" {
 }
 
 resource "libvirt_domain" "worker" {
-  for_each = { for idx, worker in local.worker_details : idx => worker }
+  for_each = var.type == "iso" ? { for idx, worker in local.worker_details : idx => worker } : {}
   name   = each.value.name
   vcpu   = 4
   memory = 16 * 1024
@@ -156,7 +194,7 @@ resource "libvirt_domain" "worker" {
   }
 
   disk {
-    file = libvirt_volume.openshift_worker_iso.id
+    file = libvirt_volume.openshift_worker_iso[0].id
   }
 
   boot_device {

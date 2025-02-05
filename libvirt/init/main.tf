@@ -139,6 +139,7 @@ resource "local_file" "pxe_script" {
     dhcp_bool = var.dhcp_bool,
     network_interface = var.network_interface,
     pxe_server_ip = local.pxe_server_ip,
+    ocp_version = var.release_version
   })
   filename = "${var.okub_install_path}/bin/pxe.sh"
   file_permission = "0750"
