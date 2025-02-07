@@ -13,7 +13,6 @@ variable "type" {
 variable "okub_install_path" {
   description = "OKUB install path"
   type        = string
-  default = "/var/lib/libvirt/images"
 }
 
 # To be defined by the user

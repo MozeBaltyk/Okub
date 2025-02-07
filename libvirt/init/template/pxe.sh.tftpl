@@ -66,7 +66,7 @@ gunzip -f -d $${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.gz
 fi
 
 # treeinfo
-    cat > "$${OKUB_INSTALL_PATH}/treeinfo" <<EOF
+    cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/.treeinfo" <<EOF
 [general]
 arch = x86_64
 family = Red Hat CoreOS
@@ -78,7 +78,7 @@ kernel = agent.x86_64-vmlinuz
 EOF
 
     # pxeboot.conf
-    cat > "$${OKUB_INSTALL_PATH}/pxeboot.conf" <<EOF
+    cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/pxelinux.cfg" <<EOF
 DEFAULT pxeboot
 TIMEOUT 20
 PROMPT 0

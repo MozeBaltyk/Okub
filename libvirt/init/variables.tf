@@ -189,7 +189,7 @@ locals {
   # if helper is true
   helper_ip = var.helper_bool ? cidrhost(var.network_cidr, 3) : null
   dns_server_ip = var.helper_bool ? local.helper_ip : local.gateway_ip
-  pxe_server_ip = var.helper_bool ? local.helper_ip : cidrhost(var.network_cidr, 4)
+  pxe_server_ip = var.helper_bool ? local.helper_ip : local.gateway_ip
 
   master_details = tolist([
     for m in range(var.masters_number) : {

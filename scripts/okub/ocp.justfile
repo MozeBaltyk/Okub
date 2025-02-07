@@ -34,6 +34,9 @@ create:
         jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' {{OKUB_INSTALL_PATH}}/.openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate
         exit 1
     fi
+
+    chmod 755 {{OKUB_INSTALL_PATH}}
+
     printf "\e[1;34m[INFO]\e[m Create a VM from qcow2 \n";
     cd ../../libvirt/ocp && tofu init;
     cd ../../libvirt/ocp && tofu plan -out=terraform.tfplan \
@@ -69,5 +72,6 @@ destroy:
       -var 'workers_mac_addresses=[{{ MACADRESS_WORKERS }}]' \
       -var "dhcp_bool={{ DHCP_BOOL }}" \
       -var "lb_bool={{ LB_BOOL }}" \
+      -var "okub_install_path={{OKUB_INSTALL_PATH}}" \
       -var "type={{ TYPE_OF_INSTALL }}" \
       ;
