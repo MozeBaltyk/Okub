@@ -140,10 +140,7 @@ resource "libvirt_network" "okub" {
   }
 }
 
-<<<<<<< HEAD
 ### ISO install
-=======
->>>>>>> c2be27686bf2fc19b61256737b524a14d3f85f93
 resource "libvirt_domain" "master_iso" {
   for_each = var.type == "iso" ? { for idx, master in local.master_details : idx => master } : {}
   name   = each.value.name
@@ -229,10 +226,7 @@ resource "libvirt_domain" "worker_iso" {
   }
 }
 
-<<<<<<< HEAD
 ### PXE install
-=======
->>>>>>> c2be27686bf2fc19b61256737b524a14d3f85f93
 resource "libvirt_domain" "master_pxe" {
   for_each = var.type == "pxe" ? { for idx, master in local.master_details : idx => master } : {}
   name   = each.value.name
@@ -243,13 +237,6 @@ resource "libvirt_domain" "master_pxe" {
     volume_id = libvirt_volume.master_disk[each.key].id
   }
 
-<<<<<<< HEAD
-=======
-  disk {
-    file = libvirt_volume.initrd[0].id
-  }
-
->>>>>>> c2be27686bf2fc19b61256737b524a14d3f85f93
   boot_device {
     dev = [ "hd", "network"]
   }
@@ -276,9 +263,4 @@ resource "libvirt_domain" "master_pxe" {
   cpu {
     mode = "host-passthrough"
   }
-<<<<<<< HEAD
 }
-=======
-
-}
->>>>>>> c2be27686bf2fc19b61256737b524a14d3f85f93
