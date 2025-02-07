@@ -69,7 +69,6 @@ resource "libvirt_volume" "initrd" {
 }
 
 ### Networks
-
 resource "libvirt_network" "okub" {
   name      = "okub"
   mode      = "nat"
@@ -141,7 +140,7 @@ resource "libvirt_network" "okub" {
   }
 }
 
-resource "libvirt_domain" "master" {
+resource "libvirt_domain" "master_iso" {
   for_each = var.type == "iso" ? { for idx, master in local.master_details : idx => master } : {}
   name   = each.value.name
   vcpu   = 4
@@ -181,9 +180,10 @@ resource "libvirt_domain" "master" {
   cpu {
     mode = "host-passthrough"
   }
+  
 }
 
-resource "libvirt_domain" "worker" {
+resource "libvirt_domain" "worker_iso" {
   for_each = var.type == "iso" ? { for idx, worker in local.worker_details : idx => worker } : {}
   name   = each.value.name
   vcpu   = 4
@@ -223,4 +223,47 @@ resource "libvirt_domain" "worker" {
   cpu {
     mode = "host-passthrough"
   }
+}
+
+resource "libvirt_domain" "master_pxe" {
+  for_each = var.type == "pxe" ? { for idx, master in local.master_details : idx => master } : {}
+  name   = each.value.name
+  vcpu   = 4
+  memory = 16 * 1024
+
+  disk {
+    volume_id = libvirt_volume.master_disk[each.key].id
+  }
+
+  disk {
+    file = libvirt_volume.initrd[0].id
+  }
+
+  boot_device {
+    dev = [ "hd", "network"]
+  }
+
+  network_interface {
+    network_id = libvirt_network.okub.id
+    hostname   = each.value.name
+    addresses  = [each.value.ip]
+    mac        = each.value.mac
+    wait_for_lease = true
+  }
+
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+  }
+
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
+  }
+
+  cpu {
+    mode = "host-passthrough"
+  }
+
 }

@@ -7,15 +7,6 @@
       - syslinux
     state: present
 
-- name: Set the bootstrap specific tftp file
-  ansible.builtin.template:
-    src: pxe-bootstrap.j2
-    dest: "/var/lib/tftpboot/pxelinux.cfg/01-{{ bootstrap.macaddr | lower | regex_replace (':', '-')}}"
-    mode: 0555
-  notify:
-    - restart tftp
-  when: bootstrap is defined
-
 - name: Set the master specific tftp files
   ansible.builtin.template:
     src: pxe-master.j2
