@@ -69,7 +69,6 @@ resource "libvirt_volume" "initrd" {
 }
 
 ### Networks
-
 resource "libvirt_network" "okub" {
   name      = "okub"
   mode      = "nat"
@@ -141,7 +140,8 @@ resource "libvirt_network" "okub" {
   }
 }
 
-resource "libvirt_domain" "master" {
+### ISO install
+resource "libvirt_domain" "master_iso" {
   for_each = var.type == "iso" ? { for idx, master in local.master_details : idx => master } : {}
   name   = each.value.name
   vcpu   = 4
@@ -183,7 +183,7 @@ resource "libvirt_domain" "master" {
   }
 }
 
-resource "libvirt_domain" "worker" {
+resource "libvirt_domain" "worker_iso" {
   for_each = var.type == "iso" ? { for idx, worker in local.worker_details : idx => worker } : {}
   name   = each.value.name
   vcpu   = 4
@@ -199,6 +199,45 @@ resource "libvirt_domain" "worker" {
 
   boot_device {
     dev = [ "hd", "cdrom"]
+  }
+
+  network_interface {
+    network_id = libvirt_network.okub.id
+    hostname   = each.value.name
+    addresses  = [each.value.ip]
+    mac        = each.value.mac
+    wait_for_lease = true
+  }
+
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+  }
+
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
+  }
+
+  cpu {
+    mode = "host-passthrough"
+  }
+}
+
+### PXE install
+resource "libvirt_domain" "master_pxe" {
+  for_each = var.type == "pxe" ? { for idx, master in local.master_details : idx => master } : {}
+  name   = each.value.name
+  vcpu   = 4
+  memory = 16 * 1024
+
+  disk {
+    volume_id = libvirt_volume.master_disk[each.key].id
+  }
+
+  boot_device {
+    dev = [ "hd", "network"]
   }
 
   network_interface {

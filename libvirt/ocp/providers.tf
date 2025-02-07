@@ -2,7 +2,7 @@ terraform {
   required_providers {
     libvirt = {
       source = "dmacvicar/libvirt"
-      #version = "0.7.6"
+      version = "0.8.1"
     }
   }
 }
@@ -13,7 +13,8 @@ terraform {
 
 provider "libvirt" {
   # Configuration du fournisseur libvirt
-  uri = "qemu:///system"
+  uri = var.libvirt_uri
+  # uri = "qemu:///system"
   # uri = "qemu:///session"
   # uri = "qemu:///session?socket=/run/user/1000/libvirt/virtqemud-sock"
 }

@@ -1,3 +1,22 @@
+# Default one
+variable "libvirt_uri" {
+    description = "The connection URI used to connect to the libvirt host"
+    default = "qemu:///system"
+}
+
+variable "type" {
+  description = "Type of installation (e.g., pxe, iso)"
+  type        = string
+  default     = "iso"
+}
+
+variable "okub_install_path" {
+  description = "OKUB install path"
+  type        = string
+  default = "/var/lib/libvirt/images"
+}
+
+# To be defined by the user
 variable "product" {
   description = "Product name for the ISO"
   type        = string
@@ -51,18 +70,6 @@ variable "dhcp_bool" {
 variable "lb_bool" {
   description = "Load balancer enabled or not"
   type        = bool
-}
-
-variable "type" {
-  description = "Type of installation (e.g., pxe, iso)"
-  type        = string
-  default     = "iso"
-}
-
-variable "okub_install_path" {
-  description = "OKUB install path"
-  type        = string
-  default = "/var/lib/libvirt/images"
 }
 
 # Set locally

@@ -55,25 +55,28 @@ _help:
 prerequisites TYPE="all":
     @just -f scripts/prerequis/install.justfile {{ TYPE }}
 
-# Create a VM from qcow2 (default latest Fedora)
-vm ACTION="create":
-    @just -f scripts/okub/kvm.justfile {{ ACTION }}
+# ["iso"|"pxe"|""] Generate iso or pxeboot for OKD or OCP install (if args left empty, generate only manifests)
+init *OUTCOME:
+    @just -f scripts/okub/init.justfile init_install {{OUTCOME}}
 
-# Install helping services to make OKD or OCP install possible
-helper SUPPORT:
-    @just -f scripts/okub/helper.justfile {{ SUPPORT }}
+# Remove OKD/OCP install
+reset:
+    @just -f scripts/okub/init.justfile reset_install
+
+# [create|destroy] an helper vm with dhcp/dns/TFPT/Quay.io
+helper ACTION="create":
+    @just -f scripts/okub/helper.justfile {{ ACTION }}
+
+# [create|destroy] ocp install on KVM
+ocp ACTION="create":
+    @just -f scripts/okub/ocp.justfile {{ ACTION }}
+
+
+
 
 # Divers pre-checks 
 check THAT:
     @just -f scripts/okub/checks.justfile {{ THAT }}
-
-# Generate iso or pxeboot for OKD or OCP install (if args left empty, generate only manifests) ["iso"|"pxe"|""]
-init *OUTCOME:
-    @just -f scripts/okub/init.justfile ocp_init_create {{OUTCOME}}
-
-# Remove OKD/OCP install
-reset:
-    @just -f scripts/okub/init.justfile ocp_init_destroy
 
 # Watch and Wait for OKD/OCP install to complete at the wanted log LEVEL (default: info) 
 wait LEVEL="info":

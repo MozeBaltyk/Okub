@@ -21,18 +21,40 @@ MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', '"52:54:00:9a:7b:
 HELPER_HOSTNAME    :=  env_var_or_default('HELPER_HOSTNAME', "helper")
 TYPE_OF_INSTALL    :=  env_var_or_default('TYPE_OF_INSTALL', "iso")
 
-# Generate a MAC adddress
-generate_mac:
+# Create a VM from qcow2 (default latest Fedora)
+create:
     #!/usr/bin/env bash
     set -e
     printf "\e[1;34m[INFO]\e[m Generate a MAC address.\n";
-    MAC_ADDR=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/';echo)
-    printf "\e[1;34m[INFO]\e[m Your mac address: ${MAC_ADDR}\n";
+    HELPER_MAC_ADDR=$(date +%s | md5sum | head -c 6 | sed -e 's/\([0-9A-Fa-f]\{2\}\)/\1:/g' -e 's/\(.*\):$/\1/' | sed -e 's/^/52:54:00:/';echo);
+    printf "\e[1;34m[INFO]\e[m Your mac address: ${HELPER_MAC_ADDR}\n";
 
-# Configure KVM
-kvm_config:
+    printf "\e[1;34m[INFO]\e[m Create a VM from qcow2 \n";
+    cd ../../libvirt/helper && tofu init;
+    cd ../../libvirt/helper && tofu plan -out=terraform.tfplan \
+      -var "hostname={{ HELPER_HOSTNAME }}" \
+      -var "helper_mac_address=${HELPER_MAC_ADDR}" \
+      -var "clusterid={{ CLUSTER_NAME }}" \
+      -var "domain={{ DOMAIN }}" \
+      -var "masters_number={{ MASTERS }}" \
+      -var "workers_number={{ WORKERS }}" \
+      -var "masters_mac_addresses={{ MACADRESS_MASTERS }}" \
+      -var "workers_mac_addresses={{ MACADRESS_WORKERS }}" \
+      ;
+    cd ../../libvirt/helper && tofu apply "terraform.tfplan";
+
+# Destroy VM from qcow2
+destroy:
     #!/usr/bin/env bash
     set -e
-    printf "\e[1;34m[INFO]\e[m Configure KVM.\n";
-    sudo systemctl enable --now libvirtd
-    sudo systemctl restart libvirtd
+    printf "\e[1;34m[INFO]\e[m Destroy a VM from KVM\n";
+    cd ../../libvirt/helper && tofu destroy -auto-approve
+      -var "hostname={{ HELPER_HOSTNAME }}" \
+      -var "helper_mac_address=${HELPER_MAC_ADDR}" \
+      -var "clusterid={{ CLUSTER_NAME }}" \
+      -var "domain={{ DOMAIN }}" \
+      -var "masters_number={{ MASTERS }}" \
+      -var "workers_number={{ WORKERS }}" \
+      -var "masters_mac_addresses={{ MACADRESS_MASTERS }}" \
+      -var "workers_mac_addresses={{ MACADRESS_WORKERS }}" \
+      ;

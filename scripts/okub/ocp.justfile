@@ -1,4 +1,5 @@
 set shell := ["bash", "-uc"]
+# Ref: https://github.com/ryanhay/ocp4-metal-install?tab=readme-ov-file#download-software
 
 # MANDATORY
 PRODUCT            :=  env_var_or_default('PRODUCT', "okd")
@@ -10,23 +11,32 @@ MASTERS            :=  env_var_or_default('MASTERS', "1")
 WORKERS            :=  env_var_or_default('WORKERS', "0")
 DHCP_BOOL          :=  env_var_or_default('DHCP_BOOL', "false")
 LB_BOOL            :=  env_var_or_default('LB_BOOL', "false")
-HELPER_BOOL        :=  env_var_or_default('HELPER_BOOL', "false")
-# IF LB_BOOL is false
 MACHINENETWORK     :=  env_var_or_default('MACHINENETWORK', "192.168.100.0/24")
 # IF INTERNAL_REGISTRY defined
 INTERNAL_REGISTRY  :=  env_var_or_default('INTERNAL_REGISTRY', "")
-# STATIC NETWORK if DHCP_BOOL is false
+# STATIC NETWORK if DHCP_BOOL is FALSE
 MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', '"52:54:00:35:fc:d8", "52:54:00:4f:12:5a", "52:54:00:e2:19:9d"')
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', '"52:54:00:9a:7b:66", "52:54:00:5b:ec:b3"')
-INTERFACE          :=  env_var_or_default('INTERFACE', "ens3")
+# IF VM HELPER is needed
+HELPER_HOSTNAME    :=  env_var_or_default('HELPER_HOSTNAME', "helper")
+TYPE_OF_INSTALL    :=  env_var_or_default('TYPE_OF_INSTALL', "iso")
 
-# Initialize OCP install
-init_install *outcome:
+# Deploy OCP on libvirtd
+create:
     #!/usr/bin/env bash
     set -e
-    printf "\e[1;34m[INFO]\e[m Initialize OCP isntall.\n";
-    cd ../../libvirt/init && tofu init;
-    cd ../../libvirt/init && tofu plan -out=terraform.tfplan \
+    printf "\e[1;34m[INFO]\e[m OCP install \n";
+    if [ $(jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' {{OKUB_INSTALL_PATH}}/.openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ]; 
+    then 
+        printf "\e[1;32m[OK]\e[m ready for OCP install \n";
+    else
+        printf "\e[1;31m[NOK]\e[m Either initialization was not done or {{OKUB_INSTALL_PATH}}/.openshift_install_state.json as certificate older then 1 days, please reset and init again.\n";
+        jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' {{OKUB_INSTALL_PATH}}/.openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate
+        exit 1
+    fi
+    printf "\e[1;34m[INFO]\e[m Create a VM from qcow2 \n";
+    cd ../../libvirt/ocp && tofu init;
+    cd ../../libvirt/ocp && tofu plan -out=terraform.tfplan \
       -var "product={{ PRODUCT }}" \
       -var "release_version={{RELEASE_VERSION}}" \
       -var "clusterid={{ CLUSTER_NAME }}" \
@@ -36,22 +46,18 @@ init_install *outcome:
       -var "workers_number={{ WORKERS }}" \
       -var 'masters_mac_addresses=[{{ MACADRESS_MASTERS }}]' \
       -var 'workers_mac_addresses=[{{ MACADRESS_WORKERS }}]' \
-      -var "internal_registry={{ INTERNAL_REGISTRY }}" \
-      -var "okub_install_path={{ OKUB_INSTALL_PATH }}" \
-      -var "network_interface={{ INTERFACE }}" \
       -var "dhcp_bool={{ DHCP_BOOL }}" \
       -var "lb_bool={{ LB_BOOL }}" \
-      -var "helper_bool={{ HELPER_BOOL }}" \
-      -var "option={{ outcome }}" \
+      -var "okub_install_path={{OKUB_INSTALL_PATH}}" \
+      -var "type={{ TYPE_OF_INSTALL }}" \
       ;
-    cd ../../libvirt/init && tofu apply "terraform.tfplan";
+    cd ../../libvirt/ocp && tofu apply "terraform.tfplan";
 
-# Remove tf state and ocp files (keep binaries)
-reset_install:
+destroy:
     #!/usr/bin/env bash
     set -e
-    printf "\e[1;34m[INFO]\e[m Destroy OCP isntall.\n";
-    cd ../../libvirt/init && tofu destroy -auto-approve \
+    printf "\e[1;34m[INFO]\e[m Destroy OCP \n";
+    cd ../../libvirt/ocp && tofu destroy -auto-approve \
       -var "product={{ PRODUCT }}" \
       -var "release_version={{RELEASE_VERSION}}" \
       -var "clusterid={{ CLUSTER_NAME }}" \
@@ -61,10 +67,7 @@ reset_install:
       -var "workers_number={{ WORKERS }}" \
       -var 'masters_mac_addresses=[{{ MACADRESS_MASTERS }}]' \
       -var 'workers_mac_addresses=[{{ MACADRESS_WORKERS }}]' \
-      -var "internal_registry={{ INTERNAL_REGISTRY }}" \
-      -var "okub_install_path={{ OKUB_INSTALL_PATH }}" \
-      -var "network_interface={{ INTERFACE }}" \
       -var "dhcp_bool={{ DHCP_BOOL }}" \
       -var "lb_bool={{ LB_BOOL }}" \
-      -var "helper_bool={{ HELPER_BOOL }}" \
-    ;
+      -var "type={{ TYPE_OF_INSTALL }}" \
+      ;
