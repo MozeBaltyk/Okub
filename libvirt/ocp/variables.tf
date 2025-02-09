@@ -10,12 +10,18 @@ variable "type" {
   default     = "iso"
 }
 
+variable "tftpboot_path" {
+  description = "tftpboot path"
+  type        = string
+  default     = "/var/lib/tftpboot/"
+}
+
+# To be defined by the user
 variable "okub_install_path" {
   description = "OKUB install path"
   type        = string
 }
 
-# To be defined by the user
 variable "product" {
   description = "Product name for the ISO"
   type        = string

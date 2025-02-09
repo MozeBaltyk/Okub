@@ -25,12 +25,17 @@ TYPE_OF_INSTALL    :=  env_var_or_default('TYPE_OF_INSTALL', "iso")
 create:
     #!/usr/bin/env bash
     set -e
-    printf "\e[1;34m[INFO]\e[m OCP install \n";
-    if [ $(jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' {{OKUB_INSTALL_PATH}}/.openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ]; 
+    printf "\e[1;34m[INFO]\e[m Check init folder before OCP install \n";
+    if [ ! {{OKUB_INSTALL_PATH}}/.openshift_install_state.json ]; then
+        printf "\e[1;31m[NOK]\e[m There is no .openshift_install_state.json file, so probably prokect was not init.";
+        exit 1
+    fi
+
+    if [[ $(jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' {{OKUB_INSTALL_PATH}}/.openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ]]; 
     then 
-        printf "\e[1;32m[OK]\e[m ready for OCP install \n";
+        printf "\e[1;32m[OK]\e[m Ready for OCP install \n";
     else
-        printf "\e[1;31m[NOK]\e[m Either initialization was not done or {{OKUB_INSTALL_PATH}}/.openshift_install_state.json as certificate older then 1 days, please reset and init again.\n";
+        printf "\e[1;31m[NOK]\e[m Certificate in {{OKUB_INSTALL_PATH}}/.openshift_install_state.json older than 1 days, please reset and init again.\n";
         jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' {{OKUB_INSTALL_PATH}}/.openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate
         exit 1
     fi

@@ -155,7 +155,7 @@ resource "libvirt_network" "okub" {
       for_each = var.type == "pxe" ? [1] : []
       content {
         option_name  = "tftp-root"
-        option_value = "/srv/boot-artifacts"
+        option_value = var.tftpboot_path
       }
     }
   }

@@ -125,6 +125,12 @@ After first reboot, fs should be setup:
 lsblk
 ```
 
+Once install is finished
+
+```bash
+oc whoami --show-console
+```
+
 ## References
 
 * Baremetal
