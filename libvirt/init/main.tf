@@ -140,23 +140,8 @@ resource "local_file" "pxe_script" {
     network_interface = var.network_interface,
     pxe_server_ip = local.pxe_server_ip,
     ocp_version = var.release_version
+    product = var.product
   })
   filename = "${var.okub_install_path}/bin/pxe.sh"
   file_permission = "0750"
-}
-
-resource "null_resource" "iso" {
-  depends_on = [local_file.iso_script]
-  count    = var.option == "iso" ? 1 : 0
-  provisioner "local-exec" { 
-    command = "${var.okub_install_path}/bin/iso.sh"
-  }
-}
-
-resource "null_resource" "pxe" {
-  depends_on = [local_file.pxe_script]
-  count    = var.option == "pxe" ? 1 : 0
-  provisioner "local-exec" {
-    command = "${var.okub_install_path}/bin/pxe.sh"
-  }
 }

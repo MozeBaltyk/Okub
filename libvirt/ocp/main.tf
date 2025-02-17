@@ -3,8 +3,8 @@ resource "libvirt_pool" "okub" {
   name = "okub"
   type = "dir"
   target {
-    path = "/srv/okub"
-    #path = local.okub_pool_path
+    #path = "/srv/okub"
+    path = local.okub_pool_path
   }
 }
 
@@ -43,31 +43,6 @@ resource "libvirt_volume" "worker_disk" {
   size   = 120 * 1024 * 1024 * 1024  # 120 GB in bytes
   format = "qcow2"
 }
-
-### PXE 
-#resource "libvirt_volume" "kernel" {
-#  count  = var.type == "pxe" ? 1 : 0
-#  source = "${var.okub_install_path}/boot-artifacts/agent.x86_64-vmlinuz"
-#  name   = "kernel"
-#  pool   = libvirt_pool.okub.name
-#  format = "raw"
-#}
-
-#resource "libvirt_volume" "rootfs" {
-#  count  = var.type == "pxe" ? 1 : 0
-#  source = "${var.okub_install_path}/boot-artifacts/agent.x86_64-rootfs.img"
-#  name   = "rootfs"
-#  pool   = libvirt_pool.okub.name
-#  format = "raw"
-#}
-
-#resource "libvirt_volume" "initrd" {
-#  count  = var.type == "pxe" ? 1 : 0
-#  source = "${var.okub_install_path}/boot-artifacts/agent.x86_64-initrd.img"
-#  name   = "initrd"
-#  pool   = libvirt_pool.okub.name
-#  format = "raw"
-#}
 
 ### Networks
 resource "libvirt_network" "okub" {

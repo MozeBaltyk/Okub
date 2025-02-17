@@ -36,3 +36,4 @@ kvm_config:
     printf "\e[1;34m[INFO]\e[m Configure KVM.\n";
     sudo systemctl enable --now libvirtd
     sudo systemctl restart libvirtd
+    sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images

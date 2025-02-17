@@ -45,6 +45,14 @@ init_install *outcome:
       -var "option={{ outcome }}" \
       ;
     cd ../../libvirt/init && tofu apply "terraform.tfplan";
+    if [ "{{ outcome }}" == "iso" ]; then
+      {{ OKUB_INSTALL_PATH }}/bin/iso.sh
+    elif [ "{{ outcome }}" == "pxe" ]; then
+      {{ OKUB_INSTALL_PATH }}/bin/pxe.sh
+    else
+      printf "\e[1;31m[NOK]\e[m Please provide a valid option: iso or pxe\n";
+      exit 1
+    fi
 
 # Remove tf state and ocp files (keep binaries)
 reset_install:
