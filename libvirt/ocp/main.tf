@@ -3,8 +3,8 @@ resource "libvirt_pool" "okub" {
   name = "okub"
   type = "dir"
   target {
-    #path = "/srv/okub"
-    path = local.okub_pool_path
+    path = "/srv/okub/pool"
+    #path = local.okub_pool_path
   }
 }
 
@@ -117,7 +117,7 @@ resource "libvirt_network" "okub" {
       for_each = var.type == "pxe" ? [1] : []
       content {
         option_name  = "dhcp-boot"
-        option_value = "agent.x86_64-vmlinuz"
+        option_value = "pxelinux.0"
       }
     }
     dynamic "options" {
