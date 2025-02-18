@@ -117,7 +117,7 @@ resource "libvirt_network" "okub" {
       for_each = var.type == "pxe" ? [1] : []
       content {
         option_name  = "dhcp-boot"
-        option_value = "agent.x86_64.ipxe"
+        option_value = "boot.ipxe"
       }
     }
     dynamic "options" {
@@ -131,6 +131,13 @@ resource "libvirt_network" "okub" {
       content {
         option_name  = "tftp-root"
         option_value = var.tftpboot_path
+      }
+    }
+    dynamic "options" {
+      for_each = var.type == "pxe" ? [1] : []
+      content {
+        option_name  = "dhcp-option"
+        option_value = "66,0.0.0.0"
       }
     }
   }

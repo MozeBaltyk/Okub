@@ -11,6 +11,8 @@ mkdir -p $${OKUB_INSTALL_PATH}/cache
 if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
   # Agent Based
   $${OKUB_INSTALL_PATH}/bin/openshift-install agent create image --dir $${OKUB_INSTALL_PATH}
+  cp -pr $${OKUB_INSTALL_PATH}/agent.x86_64.iso $${OKUB_INSTALL_PATH}/cache/rhcos-master.iso
+  cp -pr $${OKUB_INSTALL_PATH}/agent.x86_64.iso $${OKUB_INSTALL_PATH}/cache/rhcos-worker.iso
 else
   # UPI method
   if [ ! -f $${OKUB_INSTALL_PATH}/cache/rhcos-live.iso ]; then

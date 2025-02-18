@@ -184,8 +184,8 @@ locals {
   # if lb_bool is false then defined
   api_vip = var.lb_bool ? null : cidrhost(var.network_cidr, 7)
   ingress_vip = var.lb_bool ? null : cidrhost(var.network_cidr, 8)
-  # if SNO is false then defined
-  rendezvous_ip = local.sno_install ? null : cidrhost(var.network_cidr, 9)
+  # if SNO is false then defined (first master)
+  rendezvous_ip = local.sno_install ? null : cidrhost(var.network_cidr, 10)
   # if helper is true
   helper_ip = var.helper_bool ? cidrhost(var.network_cidr, 3) : null
   dns_server_ip = var.helper_bool ? local.helper_ip : local.gateway_ip
