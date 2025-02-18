@@ -184,6 +184,10 @@ resource "libvirt_domain" "master_iso" {
   cpu {
     mode = "host-passthrough"
   }
+
+  timeouts {
+    create = "60m"
+  }
   
 }
 

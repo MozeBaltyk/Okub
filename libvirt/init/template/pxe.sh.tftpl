@@ -53,6 +53,11 @@ else
         WHICH_IGNITION=bootstrap.ign
     fi
 
+    # Customize 
+    #coreos-installer pxe customize rhcos-<version>-live-initramfs.x86_64.img 
+    #--dest-ignition bootstrap.ign 
+    #-o rhcos-<version>-custom-initramfs.x86_64.img 
+
 fi
 
 
@@ -125,8 +130,8 @@ if [ -f /etc/debian_version ]; then
 elif [ -f /etc/redhat-release ]; then
     # iPXE
     sudo yum install -y ipxe-bootimgs
-    sudo cp /usr/lib/ipxe/ipxe.pxe /var/lib/tftpboot/
-    sudo cp /usr/lib/ipxe/undionly.kpxe /var/lib/tftpboot/undionly.0
+    sudo cp /usr/share/ipxe/ipxe-x86_64.efi /var/lib/tftpboot/
+    sudo cp /usr/share/ipxe/undionly.kpxe /var/lib/tftpboot/undionly.0
     sudo cp $${OKUB_INSTALL_PATH}/boot-artifacts/boot.ipxe /var/lib/tftpboot/boot.ipxe
     sudo cp $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img /var/lib/tftpboot/agent.x86_64-initrd.img
     sudo cp $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-vmlinuz /var/lib/tftpboot/agent.x86_64-vmlinuz

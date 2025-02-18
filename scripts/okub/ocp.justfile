@@ -40,10 +40,6 @@ create:
         exit 1
     fi
 
-    chmod 755 {{OKUB_INSTALL_PATH}}
-    mkdir -p {{OKUB_INSTALL_PATH}}/pool
-    sudo setfacl -m u:$(id -un):rwx {{OKUB_INSTALL_PATH}}/pool
-
     printf "\e[1;34m[INFO]\e[m Create a VM from qcow2 \n";
     cd ../../libvirt/ocp && tofu init;
     cd ../../libvirt/ocp && tofu plan -out=terraform.tfplan \
