@@ -45,6 +45,25 @@ resource "null_resource" "download_and_extract_butane" {
   }
 }
 
+# Install nmstatectl
+resource "null_resource" "download_and_extract_nmstatectl" {
+  provisioner "local-exec" {
+    quiet = true
+    command = <<EOT
+      if [ -f /etc/redhat-release ] ; then
+        printf "\e[1;33m[CHANGE]\e[m Installing nmstatectl package...\n"
+        sudo dnf install -y /usr/bin/nmstatectl
+      elif [ -f /etc/debian_version ] ; then
+        printf "\e[1;33m[WARNING]\e[m no nmstatectl package for ubuntu, Cargo is needed as a prerequisite to compile...\n"
+        printf "\e[1;33m[CHANGE]\e[m Installing nmstatectl package...\n"
+        git clone https://github.com/nmstate/nmstate.git ${var.okub_install_path}/bin/nmstate
+        cd ${var.okub_install_path}/bin/nmstate; sudo PREFIX=/usr make install; cd -
+        sudo rm -rf ${var.okub_install_path}/bin/nmstate
+      fi
+    EOT
+  }
+}
+
 # Generate template install-config.yaml
 resource "local_file" "install-config" {
   depends_on = [null_resource.download_and_extract_openshift_install]
