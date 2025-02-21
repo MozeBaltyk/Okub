@@ -26,6 +26,13 @@ EOF
 
 else
     # UPI method
+    if [ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
+      # Create Manifest (needed for SNO since no agent-config.yaml)
+      $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
+      # Ignition
+      $${OKUB_INSTALL_PATH}/bin/openshift-install create single-node-ignition-config --dir $${OKUB_INSTALL_PATH}
+    fi
+
     URL_COREOS_KERNEL=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.kernel.location)
     URL_COREOS_INITRAMFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.initramfs.location)
     URL_COREOS_ROOTFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.rootfs.location)
@@ -69,7 +76,6 @@ boot
 EOF
 
 fi
-
 
 #### Common part #####
 

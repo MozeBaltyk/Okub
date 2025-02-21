@@ -18,13 +18,14 @@ This Project provides CLI tools to help OKD/OCP deployment with a special focus 
 | Compact cluster              | 3                             | 0 or 1                  | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
 | HA cluster                   | 3                             | 2 and above             | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
 
-Add to above list, an *helper node* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry)
+Add to above list, an *helper node* or *pfsense* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry).
+in case of deployment on KVM, the DNS, DHCP and TFTP are embeded in KVM to avoid changes on the host's network config.
 
 2. Diverse installation method
 
-We should normally count a bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node.    
+We should normally count one extra bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node. Since this project focus on baremetal installation. So there is a benefice to not use one baremetal for bootstraping which then need to be erase and reuse as a worker but added manually.   
 
-The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This method does not have any reason to exist anymore since it's included in the **Agent-based Installer** but the only advantage is you do not need a *rendezvousIP* and the install is completed as *bootstrap-in-place*.   
+The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This method does not have any reason to exist anymore since it's included in the **Agent-based Installer** but there are still some advantage to use it, the install is completed as *bootstrap-in-place* and require only 4 vcpu instead of 8 vcpu for **Agent-based Installer**.   
 
 The **Agent-based Installer** will require an extra `agent-config.yaml` to setup the *rendezvousIP* which in case of DHCP will be the one of the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method seems to work for OKD even though is not present in documentation.
 
@@ -62,7 +63,7 @@ Take also into account in the `install-config.yaml` the platform arguments which
 
 - *vsphere*, does not concern us since this project focus mainly on baremetal.
 
-4. Diverse Helper are present in script to meet requirement above:
+4. Diverse "Helpers" are present as ansible roles but the best would be to use pfsense vm or router:
 
 - DNS = Bind server.
 
@@ -76,11 +77,11 @@ Take also into account in the `install-config.yaml` the platform arguments which
 
 - an bootable iso to burn on USB stick
 
-- pxe boot to push on *helper server* or any other *pxe server*
+- pxe boot to push on *helper server* or in the KVM embended TFTP server.
 
 ## Getting started
 
-1. Clone this project
+1. Clone this project and get inside
 ```sh
 git clone https://github.com/mozebaltyk/Okub.git
 ```
@@ -94,7 +95,7 @@ git clone https://github.com/mozebaltyk/Okub.git
 
 ## Troubleshootings
 
-Few tips to troubleshoot:
+Few tips for troubleshooting:
 
 ```bash
 cd ${OKUB_INSTALL_PATH}
