@@ -76,3 +76,9 @@ reset_install:
       -var "lb_bool={{ LB_BOOL }}" \
       -var "helper_bool={{ HELPER_BOOL }}" \
     ;
+    rm -rf {{ OKUB_INSTALL_PATH }}/auth
+    rm -f {{ OKUB_INSTALL_PATH }}/metadata.json
+    rm -f {{ OKUB_INSTALL_PATH }}/.openshift_install.log
+    rm -f {{ OKUB_INSTALL_PATH }}/.openshift_install_state.json
+    rm -f {{ OKUB_INSTALL_PATH }}/cache/rhcos-master.iso
+    rm -f {{ OKUB_INSTALL_PATH }}/cache/rhcos-worker.iso
