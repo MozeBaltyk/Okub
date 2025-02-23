@@ -81,7 +81,13 @@ variable "option" {
   type        = string
   default    = ""
 }
- 
+
+variable "install_disk" {
+  description = "Target Disk to install OCP"
+  type        = string
+  default    = "/dev/vda"
+}
+
 # Data sources
 data "http" "okd_latest_release" {
   url = "https://api.github.com/repos/okd-project/okd/releases/latest"

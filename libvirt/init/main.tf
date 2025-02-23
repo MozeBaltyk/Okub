@@ -85,6 +85,7 @@ resource "local_file" "install-config" {
         dhcp_bool = var.dhcp_bool,
         api_vip = local.api_vip,
         ingress_vip = local.ingress_vip,
+        install_disk = var.install_disk
     }
   )
   filename = "${var.okub_install_path}/install-config.yaml"
@@ -123,23 +124,7 @@ resource "local_file" "agent-config" {
   }
 }
 
-# Generate manifests (only for SNO since no agent-config.yaml)
-resource "null_resource" "generate_manifest" {
-  depends_on = [local_file.install-config, local_file.agent-config]
-  count = local.sno_install ? 1 : 0
-  provisioner "local-exec" {
-    quiet = true
-    command = <<EOT
-      # Create Manifest (needed for SNO since no agent-config.yaml)
-      ${var.okub_install_path}/bin/openshift-install create manifests --dir ${var.okub_install_path}
-      # Ignition
-      ${var.okub_install_path}/bin/openshift-install create single-node-ignition-config --dir ${var.okub_install_path}
-    EOT
-  }
-}
-
 resource "local_file" "iso_script" {
-  depends_on = [null_resource.generate_manifest]
   content  = templatefile("${path.module}/template/iso.sh.tftpl", {
     okub_install_path = var.okub_install_path,
     masters_number = var.masters_number,
@@ -150,7 +135,6 @@ resource "local_file" "iso_script" {
 }
 
 resource "local_file" "pxe_script" {
-  depends_on = [null_resource.generate_manifest]
   content  = templatefile("${path.module}/template/pxe.sh.tftpl", {
     okub_install_path = var.okub_install_path,
     masters_number = var.masters_number,

@@ -14,6 +14,7 @@ printf "\e[1;34m[INFO]\e[m Generate PXE boot files\n";
 
 if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
     # Agent Based
+    #$${OKUB_INSTALL_PATH}/bin/openshift-install agent create cluster-manifests --dir $${OKUB_INSTALL_PATH}
     $${OKUB_INSTALL_PATH}/bin/openshift-install agent create pxe-files --dir $${OKUB_INSTALL_PATH}
 
     # boot.ipxe
