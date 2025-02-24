@@ -47,18 +47,24 @@ resource "libvirt_domain" "pfsense" {
 
   disk {
     volume_id = libvirt_volume.pfsense_disk.id
+    scsi = true
   }
 
   disk {
     volume_id = libvirt_volume.pfsense_iso.id
+    file = var.pfsense_iso_path
+    device = "cdrom"
   }
 
   network_interface {
     network_id = libvirt_network.bridge0.id
+    mac = "52:54:00:00:00:01"
+    hostname = "pfsense"
   }
 
   network_interface {
     network_id = libvirt_network.bridge1.id
+    mac = "52:54:00:00:00:02"
   }
 
   graphics {
@@ -80,5 +86,8 @@ resource "libvirt_domain" "pfsense" {
   cpu {
     mode = "host-passthrough"
   }
+
+  # Add cloud-init for initial configuration
+  cloudinit = libvirt_cloudinit_disk.pfsense_init.id
 }
 
