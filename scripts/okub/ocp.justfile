@@ -78,3 +78,17 @@ destroy:
       -var "okub_install_path={{OKUB_INSTALL_PATH}}" \
       -var "type={{ TYPE_OF_INSTALL }}" \
       ;
+
+haproxy:
+    #!/usr/bin/env bash
+    set -e
+    printf "\e[1;34m[INFO]\e[m First DNS redirect \n";
+    sudo echo -e "[main]\ndns=dnsmasq" | sudo tee /etc/NetworkManager/conf.d/openshift.conf
+    sudo echo server=/okub.example.com/192.168.100.1 | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+    sudo systemctl restart NetworkManager
+    sudo resolvectl dns virbr-{{ CLUSTER_NAME }} {{ MACHINENETWORK }} #Get first ip
+    sudo resolvectl domain virbr-{{ CLUSTER_NAME }} "~{{ CLUSTER_NAME }}.{{ DOMAIN }}"
+    sudo systemctl restart systemd-resolved
+    printf "\e[1;34m[INFO]\e[m Create a local HAProxy \n";
+    dnf install haproxy
+    # Template for haproxy.cfg

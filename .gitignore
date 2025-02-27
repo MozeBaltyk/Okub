@@ -33,3 +33,4 @@ AWS
 # Staging
 venv
 .venv
+.aider*

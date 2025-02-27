@@ -46,7 +46,11 @@ platform:
 %{ endif ~}
 %{ if sno_install ~}
 bootstrapInPlace:
+<<<<<<< HEAD
   installationDisk: "${install_disk}"
+=======
+  installationDisk: "/dev/sda"
+>>>>>>> f4743318a0cbcc3f00afd31f02b4c1e18e482db3
 %{ endif ~}
 %{ if internal_registry_url != "" ~}
 imageDigestSources:
