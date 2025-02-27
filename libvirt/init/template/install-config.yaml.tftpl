@@ -46,7 +46,7 @@ platform:
 %{ endif ~}
 %{ if sno_install ~}
 bootstrapInPlace:
-  installationDisk: "/dev/vda"
+  installationDisk: "/dev/sda"
 %{ endif ~}
 %{ if internal_registry_url != "" ~}
 imageContentSources:

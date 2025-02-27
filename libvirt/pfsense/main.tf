@@ -87,7 +87,5 @@ resource "libvirt_domain" "pfsense" {
     mode = "host-passthrough"
   }
 
-  # Add cloud-init for initial configuration
-  cloudinit = libvirt_cloudinit_disk.pfsense_init.id
 }
 

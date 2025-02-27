@@ -1,10 +1,12 @@
 ### Pool
-resource "libvirt_pool" "okub" {
-  name = "okub"
+resource "libvirt_pool" "okub_pool" {
+  name = var.clusterid
   type = "dir"
   target {
-    path = "/srv/okub/pool"
-    #path = local.okub_pool_path
+    path = local.okub_pool_path
+  }
+  xml { 
+    xslt = file("${path.module}/files/os_pool_permissions.xsl.tpl" ) 
   }
 }
 
@@ -13,7 +15,7 @@ resource "libvirt_pool" "okub" {
 resource "libvirt_volume" "openshift_master_iso" {
   count  = var.type == "iso" ? 1 : 0
   name   = "${var.clusterid}-master-${var.product}-${var.release_version}.iso"
-  pool   = libvirt_pool.okub.name
+  pool   = libvirt_pool.okub_pool.name
   source = "${local.okub_cache_path}/rhcos-master.iso"
 }
 
@@ -21,7 +23,7 @@ resource "libvirt_volume" "openshift_master_iso" {
 resource "libvirt_volume" "openshift_worker_iso" {
   count  = var.type == "iso" ? 1 : 0
   name   = "${var.clusterid}-worker-${var.product}-${var.release_version}.iso"
-  pool   = libvirt_pool.okub.name
+  pool   = libvirt_pool.okub_pool.name
   source = "${local.okub_cache_path}/rhcos-worker.iso"
 }
 
@@ -30,7 +32,7 @@ resource "libvirt_volume" "openshift_worker_iso" {
 resource "libvirt_volume" "master_disk" {
   for_each = { for idx, master in local.master_details : idx => master }
   name   = "${each.value.name}-disk-${var.product}-${var.release_version}.qcow2"
-  pool   = libvirt_pool.okub.name
+  pool   = libvirt_pool.okub_pool.name
   size   = 120 * 1024 * 1024 * 1024  # 120 GB in bytes
   format = "qcow2"
 }
@@ -39,7 +41,7 @@ resource "libvirt_volume" "master_disk" {
 resource "libvirt_volume" "worker_disk" {
   for_each = { for idx, worker in local.worker_details : idx => worker }
   name   = "${each.value.name}-disk-${var.product}-${var.release_version}.qcow2"
-  pool   = libvirt_pool.okub.name
+  pool   = libvirt_pool.okub_pool.name
   size   = 120 * 1024 * 1024 * 1024  # 120 GB in bytes
   format = "qcow2"
 }
@@ -48,96 +50,28 @@ resource "libvirt_volume" "worker_disk" {
 resource "libvirt_network" "okub" {
   name      = "okub"
   mode      = "nat"
-  bridge    = "virbr9"
+  bridge    = "virbr-${var.clusterid}"
   autostart = true
   domain    = "${local.subdomain}"
   addresses = [var.network_cidr]
-  dhcp { enabled = false }
+  dhcp { enabled = true }
   dns {
-    enabled = true
-    local_only = false
-
-    # Loop to create DNS entries for each master
+    local_only = true
     dynamic "hosts" {
-      for_each = { for idx, master in local.master_details : idx => master }
+      for_each = local.dns_hosts
       content {
-        hostname = "${hosts.value.name}.${local.subdomain}"
+        hostname = hosts.value.hostname
         ip       = hosts.value.ip
       }
-    }
-
-    # Loop to create DNS entries for each worker
-    dynamic "hosts" {
-      for_each = { for idx, worker in local.worker_details : idx => worker }
-      content {
-        hostname = "${hosts.value.name}.${local.subdomain}"
-        ip       = hosts.value.ip
-      }
-    }
-
-    # Loop to create DNS entries for each etcd
-    dynamic "hosts" {
-      for_each = { for idx, master in local.master_details : idx => master }
-      content {
-        hostname = "etcd-${hosts.key}.${local.subdomain}"
-        ip       = hosts.value.ip
-      }
-    }
-    hosts {
-      hostname = "api.${local.subdomain}"
-      ip       = local.lb_vip
-    }
-    hosts {
-      hostname = "api-int.${local.subdomain}"
-      ip       = local.lb_vip
     }
   }
 
   dnsmasq_options {
-    options {
-      option_name  = "domain"
-      option_value = "${var.domain}"
-    }
-    options  {
-      option_name = "no-hosts"
-    }
-    # Loop to create srv-host entries for each master
     dynamic "options" {
-      for_each = { for idx, master in local.master_details : idx => master }
+      for_each = local.dnsmasq_options
       content {
-        option_name  = "srv-host"
-        option_value = "_etcd-server-ssl._tcp.${local.subdomain},etcd-${options.key}.${local.subdomain},2380,0,10"
-      }
-    }
-    options {
-      option_name  = "address"
-      option_value = "/apps.${local.subdomain}/${local.lb_vip}"
-    }
-    dynamic "options" {
-      for_each = var.type == "pxe" ? [1] : []
-      content {
-        option_name  = "dhcp-boot"
-        option_value = "boot.ipxe"
-      }
-    }
-    dynamic "options" {
-      for_each = var.type == "pxe" ? [1] : []
-      content {
-        option_name  = "enable-tftp"
-      }
-    }
-    dynamic "options" {
-      for_each = var.type == "pxe" ? [1] : []
-      content {
-        option_name  = "tftp-root"
-        option_value = var.tftpboot_path
-      }
-    }
-    dynamic "options" {
-      for_each = var.type == "pxe" ? [1] : []
-      content {
-        option_name  = "dhcp-option"
-        option_value = "66,0.0.0.0"
+        option_name  = options.value["option_name"]
+        option_value = options.value["option_value"]
       }
     }
   }
@@ -152,10 +86,12 @@ resource "libvirt_domain" "master_iso" {
 
   disk {
     volume_id = libvirt_volume.master_disk[each.key].id
+    scsi      = "true"
   }
 
   disk {
     file = libvirt_volume.openshift_master_iso[0].id
+    scsi = "true"
   }
 
   boot_device {
@@ -242,6 +178,7 @@ resource "libvirt_domain" "master_pxe" {
 
   disk {
     volume_id = libvirt_volume.master_disk[each.key].id
+    scsi     = "true"
   }
 
   boot_device {

@@ -37,3 +37,7 @@ kvm_config:
     sudo systemctl enable --now libvirtd
     sudo systemctl restart libvirtd
     sudo setfacl -m u:$(id -un):rwx /var/lib/libvirt/images
+    # Configure Libvirt to accept TCP if you want KVM to be managed by the cluster-api provider
+    #sudo systemctl enable --now libvirtd-tcp.socket
+    #sudo echo "auth_tcp = \"none\"" >> /etc/libvirt/libvirtd.conf
+    #sudo systemctl restart libvirtd

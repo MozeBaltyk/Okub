@@ -15,7 +15,7 @@ if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
   cp -pr $${OKUB_INSTALL_PATH}/agent.x86_64.iso $${OKUB_INSTALL_PATH}/cache/rhcos-worker.iso
 else
   # UPI method
-  if [ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
+  if [[ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]]; then
     # Create Manifest (needed for SNO since no agent-config.yaml)
     $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
     # Ignition
