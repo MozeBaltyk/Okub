@@ -85,7 +85,7 @@ variable "option" {
 variable "install_disk" {
   description = "Target Disk to install OCP"
   type        = string
-  default    = "/dev/vda"
+  default    = "/dev/sda"
 }
 
 # Data sources
