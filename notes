@@ -1,4 +1,4 @@
-core@master01:~[core@master0/etc/systemd/system/bootkube.serviceootkube.service
+core@master01:~[core@master0/etc/systemd/system/bootkube.service
 [Unit]
 Description=Bootstrap a Kubernetes cluster
 Requires=crio-configure.service

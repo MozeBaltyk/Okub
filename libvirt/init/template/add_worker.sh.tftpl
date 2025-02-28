@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -e
+
+OKUB_INSTALL_PATH=${okub_install_path}
+MASTERS=${masters_number}
+WORKERS=${workers_number}
+DHCP_BOOL=${dhcp_bool}
+
+# Based on docs
+# https://docs.openshift.com/container-platform/4.15/nodes/nodes/nodes-sno-worker-nodes.html#sno-adding-worker-nodes-to-single-node-clusters-manually_add-workers
+
+# Generate worker ignition
+if [ ! -f $${OKUB_INSTALL_PATH}/worker.ign ]; then
+    $${OKUB_INSTALL_PATH}/bin/oc extract -n openshift-machine-api secret/worker-user-data-managed --keys=userData --to=- > $${OKUB_INSTALL_PATH}/worker.ign
+fi
+
+# Create a new VM coreos 
+
+# Connect to new workers
+if [ $DHCP_BOOL == "false" ]; then
+  # This scenario cannot be automated since connexion to console to set network first
+  # Generate an new ignition inside console to fix hostname
+  # sudo coreos-installer install --copy-network --ignition-url=<new_worker_ign_file> <hard_disk> --insecure-ignition
+elif [ $DHCP_BOOL == "true" ]; then
+  # coreos-installer install --ignition-url=<hosted_worker_ign_file> <hard_disk>
+else
+  
+fi
+
+# Validate pending CSR
+oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve

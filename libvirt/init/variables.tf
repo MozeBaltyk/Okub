@@ -190,6 +190,8 @@ locals {
   # if lb_bool is false then defined
   api_vip = var.lb_bool ? null : cidrhost(var.network_cidr, 7)
   ingress_vip = var.lb_bool ? null : cidrhost(var.network_cidr, 8)
+  # if lb_bool is true then defined
+  lb_vip = var.lb_bool ? local.gateway_ip : null
   # if SNO is false then defined (first master)
   rendezvous_ip = local.sno_install ? null : cidrhost(var.network_cidr, 10)
   # if helper is true

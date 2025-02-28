@@ -142,9 +142,18 @@ resource "local_file" "pxe_script" {
     dhcp_bool = var.dhcp_bool,
     network_interface = var.network_interface,
     pxe_server_ip = local.pxe_server_ip,
-    ocp_version = var.release_version
-    product = var.product
+    ocp_version = var.release_version,
+    product = var.product,
   })
   filename = "${var.okub_install_path}/bin/pxe.sh"
+  file_permission = "0750"
+}
+
+resource "local_file" "dns_script" {
+  content  = templatefile("${path.module}/template/local-dns-config.sh.tftpl", {
+    dns_server_ip = local.dns_server_ip,
+    subdomain = local.subdomain,
+  })
+  filename = "${var.okub_install_path}/bin/local-dns-config.sh"
   file_permission = "0750"
 }
