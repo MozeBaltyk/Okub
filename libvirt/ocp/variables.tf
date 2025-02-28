@@ -123,7 +123,7 @@ locals {
   }]
   )
 
-  # When lb_bool is false
+  # DNS local_only - When lb_bool is false
   dns_hosts = var.lb_bool ? [] : concat(
     [
       for master in local.master_details : {
@@ -137,29 +137,36 @@ locals {
         ip = master.ip
       }
     ],
-    [
-      for master in local.master_details : {
-        hostname = "apps.${local.subdomain}"
-        ip = master.ip
-      }
-    ],
   )
 
   # When lb_bool is true
   dnsmasq_options_lb = var.lb_bool ? [
     {
       option_name  = "address"
-      option_value = "/api.${var.domain}/${local.lb_vip}"
+      option_value = "/api.${local.subdomain}/${local.lb_vip}"
     },
     {
       option_name  = "address"
-      option_value = "/api-int.${var.domain}/${local.lb_vip}"
+      option_value = "/api-int.${local.subdomain}/${local.lb_vip}"
     },
     {
       option_name  = "address"
-      option_value = "/apps.${var.domain}/${local.lb_vip}"
+      option_value = "/apps.${local.subdomain}/${local.lb_vip}"
     },
-  ] : []
+  # When lb_bool is false
+  ] : concat(
+    var.workers_number == 2 ? [
+      for worker in local.worker_details : {
+        option_name  = "address"
+        option_value = "/apps.${local.subdomain}/${worker.ip}"
+      }
+    ] : [
+      for master in local.master_details : {
+        option_name  = "address"
+        option_value = "/apps.${local.subdomain}/${master.ip}"
+      }
+    ],
+  )
 
   # Loop to create srv-host entries for _etcd server (not needed in newer versions of OCP)
   dnsmasq_options_etcd = concat(
