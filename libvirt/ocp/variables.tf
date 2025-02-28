@@ -87,12 +87,16 @@ locals {
       name = format("master%02d", m + 1)
       ip   = cidrhost(var.network_cidr, m + 10)
       mac  = var.masters_mac_addresses[m]
+      cpu = 4
+      memory = 16 * 1024
     }])
   worker_details = tolist([
     for w in range(var.workers_number) : {
       name = format("worker%02d", w + 1)
       ip   = cidrhost(var.network_cidr, w + 20)
       mac  = var.workers_mac_addresses[w]
+      cpu = 4
+      memory = 8 * 1024
     }])
 
   # DNS config depending on lb_bool
@@ -177,6 +181,7 @@ locals {
     },
     {
       option_name  = "enable-tftp"
+      option_value = ""
     },
     {
       option_name  = "tftp-root"

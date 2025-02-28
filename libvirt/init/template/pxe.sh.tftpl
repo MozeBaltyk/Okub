@@ -27,7 +27,7 @@ EOF
 
 else
     # UPI method
-    if [ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
+    if [[ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]]; then
       # Create Manifest (needed for SNO since no agent-config.yaml)
       $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
       # Ignition
@@ -49,7 +49,7 @@ else
     # Initramfs
     if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img ]; then
     printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_INITRAMFS##*/}\n";
-    curl -Ls $${URL_COREOS_INITRAMFS} -o $${OKUB_INSTALL_PATH}/boot-artifacts/$${URL_COREOS_INITRAMFS##*/}
+    curl -Ls $${URL_COREOS_INITRAMFS} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img
     fi
 
     # Rootfs
@@ -68,11 +68,11 @@ else
     # boot.ipxe
     cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/boot.ipxe" <<EOF
 #!ipxe
-set INSTALLDEV /dev/vda
+set INSTALLDEV /dev/sda
 set IGNITIONURL http://$${PXE_SERVER}:8000/$${WHICH_IGNITION}
 set ROOTFSURL http://$${PXE_SERVER}:8000/boot-artifacts/agent.x86_64-rootfs.img
 initrd --name initrd agent.x86_64-initrd.img
-kernel agent.x86_64-vmlinuz initrd=initrd ip=dhcp rd.neednet=1 coreos.inst.install_dev=$${INSTALLDEV} coreos.live.rootfs_url=$${ROOTFSURL} coreos.inst.ignition_url=$${IGNITIONURL} mitigations=auto,nosmt ignition.firstboot ignition.platform.id=metal
+kernel agent.x86_64-vmlinuz initrd=initrd ip=dhcp rd.neednet=1 coreos.inst.install_dev=\$${INSTALLDEV} coreos.live.rootfs_url=\$${ROOTFSURL} coreos.inst.ignition_url=\$${IGNITIONURL} mitigations=auto,nosmt ignition.firstboot ignition.platform.id=metal
 boot
 EOF
 
@@ -146,4 +146,4 @@ fi
 
 printf "\e[1;32m[OK]\e[m PXE config generated and raw image downloaded.\n"
 
-printf "\e[1;34m[INFO]\e[m \n Go inside your install directory $${OKUB_INSTALL_PATH}, then run: python3 -m http.server \n"
+printf "\e[1;34m[INFO]\e[m Get inside the install directory $${OKUB_INSTALL_PATH}, and run an http server: python3 -m http.server \n"

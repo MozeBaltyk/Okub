@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -e
+
+ACTION=$1
+DNS_SERVER_IP = ${dns_server_ip}
+SUBDOMAIN = ${subdomain},
+
+setup_dns() {
+  # make DNS local config
+  sudo echo -e "[main]\ndns=dnsmasq" | sudo tee /etc/NetworkManager/conf.d/openshift.conf
+  sudo echo server=/$${SUBDOMAIN}/$${DNS_SERVER_IP} | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
+  sudo systemctl reload NetworkManager
+}
+
+cleanup_dns() {
+  # cleanup DNS local config
+  sudo rm -f /etc/NetworkManager/conf.d/openshift.conf
+  sudo rm -f /etc/NetworkManager/dnsmasq.d/openshift.conf
+  sudo systemctl reload NetworkManager
+}
+
+case $ACTION in
+    setup)
+        setup_dns
+        ;;
+    cleanup)
+        cleanup_dns
+        ;;
+    *)
+        echo "Invalid action: $ACTION"
+        echo "Usage: $0 <setup|cleanup> <dns_server_ip> <subdomain>"
+        exit 1
+        ;;
+esac
