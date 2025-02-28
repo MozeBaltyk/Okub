@@ -79,7 +79,7 @@ variable "lb_bool" {
 
 # Set locally
 locals {
-  okub_pool_path      = "/srv/${var.clusterid}/pool"
+  okub_pool_path      = "/home/${var.clusterid}/pool"
   okub_cache_path = "${var.okub_install_path}/cache"
   subdomain = "${var.clusterid}.${var.domain}"
   master_details = tolist([
@@ -130,6 +130,12 @@ locals {
     [
       for master in local.master_details : {
         hostname = "api-int.${local.subdomain}"
+        ip = master.ip
+      }
+    ],
+    [
+      for master in local.master_details : {
+        hostname = "apps.${local.subdomain}"
         ip = master.ip
       }
     ],

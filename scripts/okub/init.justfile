@@ -82,3 +82,4 @@ reset_install:
     rm -f {{ OKUB_INSTALL_PATH }}/.openshift_install_state.json
     rm -f {{ OKUB_INSTALL_PATH }}/cache/rhcos-master.iso
     rm -f {{ OKUB_INSTALL_PATH }}/cache/rhcos-worker.iso
+    rm -f {{ OKUB_INSTALL_PATH }}/cache/{worker.ign,bootstrap-in-place-for-live-iso.ign,bootstrap.ign,agent.x86_64.iso,rendezvousIP}
