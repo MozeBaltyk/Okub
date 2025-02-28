@@ -175,6 +175,7 @@ locals {
     },
     {
       option_name  = "enable-tftp"
+      option_value = ""
     },
     {
       option_name  = "tftp-root"
