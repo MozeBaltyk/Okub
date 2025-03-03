@@ -23,7 +23,14 @@ else
   fi
 
   if [ ! -f $${OKUB_INSTALL_PATH}/cache/rhcos-live.iso ]; then
-    URL_COREOS_ISO=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.iso.disk.location)
+    # issue with OKD 4.16 and 4.17
+    if [[ $($${OKUB_INSTALL_PATH}/bin/openshift-install version | grep -e "4.16.*-okd-*") ]]; then
+      URL_COREOS_ISO=https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.16/4.16.3/rhcos-4.16.3-x86_64-live.x86_64.iso
+    elif [[ $($${OKUB_INSTALL_PATH}/bin/openshift-install version | grep -e "4.17.*-okd-*") ]]; then
+      URL_COREOS_ISO=https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.17/4.17.17/rhcos-4.17.17-x86_64-live.x86_64.iso
+    else
+      URL_COREOS_ISO=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.iso.disk.location)
+    fi
     printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_ISO##*/} as rhcos-live.iso\n";
     curl -Ls $${URL_COREOS_ISO} -o $${OKUB_INSTALL_PATH}/cache/rhcos-live.iso
   fi
@@ -39,4 +46,5 @@ else
   $${COREOS_INSTALLER} iso ignition embed -fi "$${WHICH_IGNITION}" "cache/rhcos-master.iso"
   $${COREOS_INSTALLER} iso ignition embed -fi "worker.ign" "cache/rhcos-worker.iso"
 fi
+
 printf "\e[1;32m[OK]\e[m RHCOS iso generated with ignition.\n"
