@@ -11,77 +11,24 @@ This Project provides CLI tools to help OKD/OCP deployment with a special focus 
 
 1. Type of Architecture and Requirements
 
-| Topology                     | Number of control plane nodes | Number of compute nodes | vCPU         | Memory          | Storage |
-|------------------------------|-------------------------------|-------------------------|--------------|-----------------|---------|
-| Single-node cluster          | 1                             | 0                       | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
-| Single-node cluster extended | 1                             | 1 or above              | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
-| Compact cluster              | 3                             | 0 or 1                  | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
-| HA cluster                   | 3                             | 2 and above             | 8 vCPU cores | 16 GB of RAM    | 120 GB  |
+| Topology                     | Nb of control planes | Nb of compute nodes | vCPU         | Memory       | Storage | install method |
+|------------------------------|----------------------|---------------------|--------------|--------------|---------|----------------|
+| Single-node cluster          | 1                    | 0                   | 4 vCPU cores | 16 GB of RAM | 120 GB  | UPI sno        |
+| Single-node cluster extended | 1                    | 1 or above          | 8 vCPU cores | 16 GB of RAM | 120 GB  | UPI sno + add  |
+| Compact cluster              | 3                    | 0 or 1              | 8 vCPU cores | 16 GB of RAM | 120 GB  | ABI            |
+| HA cluster                   | 3                    | 2 and above         | 8 vCPU cores | 16 GB of RAM | 120 GB  | ABI            |
 
-Add to above list, an *helper node* or *pfsense* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry).
-in case of deployment on KVM, the DNS, DHCP and TFTP are embeded in KVM to avoid changes on the host's network config.
-
-2. Diverse installation method
-
-We should normally count one extra bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node. Since this project focus on baremetal installation. So there is a benefice to not use one baremetal for bootstraping which then need to be erase and reuse as a worker but added manually.   
-
-The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This method does not have any reason to exist anymore since it's included in the **Agent-based Installer** but there are still some advantage to use it, the install is completed as *bootstrap-in-place* and require only 4 vcpu instead of 8 vcpu for **Agent-based Installer**.   
-
-The **Agent-based Installer** will require an extra `agent-config.yaml` to setup the *rendezvousIP* which in case of DHCP will be the one of the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method seems to work for OKD even though is not present in documentation.
-
-Take also into account in the `install-config.yaml` the platform arguments which allow 3 values: `none`, `baremetal` and `vsphere`.     
-
-3. plateform options
-
-**Agent-based Installer** support only those 3 plateforms options below:
-
-- *none*, the only possible option for **single-node installer** but works also on all raw install (like for a baremetal without BMC).
-
-   Requirements for *plateform: none{}*:
-
-      - `networkType: OVNKubernetes`
-
-      - DNS for `*.api.<domain>` and `apps.<domain>` pointing to the Loadbalancer.
-
-      - DNS and reverse DNS (PTR) for all masters and workers is required
-
-      - DHCP services to provide IP addresses to nodes during installation.
-
-      - Loadbalancer for 6443 and 22623 if not standalone install ( since `apiVIPs` and `ingressVIPs` are not defined in *none* block )
-
-- *baremetal*, for hardware with BMC or for configuring dual stacks network.
-
-   Requirements for *plateform: baremetal{}*:
-
-      - if `apiVIPs` and `ingressVIPs` are defined in the config, no need for loadbalancing
-
-      - if static IP defined then no DHCP
-
-      - if Outcome iso - no PXE boot server
-
-      - only DNS for `*.api.<domain>` and `apps.<domain>` is required
-
-- *vsphere*, does not concern us since this project focus mainly on baremetal.
-
-4. Diverse "Helpers" are present as ansible roles but the best would be to use pfsense vm or router:
-
-- DNS = Bind server.
-
-- DHCP = DHCP server.
-
-- PXE server = TFTP server.
-
-- Loadbalancer = HAproxy server.
-
-5. Diverse Installer Outcome
-
-- an bootable iso to burn on USB stick
-
-- pxe boot to push on *helper server* or in the KVM embended TFTP server.
+Add to above list, an *helper node* or *pfsense* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry). In case of deployment on KVM, the DNS, DHCP and TFTP are embeded in KVM to avoid changes on the host's network config.
 
 ## Getting started
 
-1. Clone this project and get inside
+1. Get a Pull Secret and set it in `.docker/config.json`
+
+```json
+
+```
+
+2.  Clone this project and get inside
 ```sh
 git clone https://github.com/mozebaltyk/Okub.git
 ```
@@ -131,6 +78,64 @@ Once install is finished
 ```bash
 oc whoami --show-console
 ```
+
+## TL;DR
+
+1. Diverse installation methods
+
+We should normally count one extra bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node. Since this project focus on baremetal installation. So there is a benefice to not use one baremetal for bootstraping which then need to be erase and reuse as a worker but added manually.   
+
+The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This install method could seems outdated and the **Agent-based Installer** a better approach. But there are still some advantage left to use it, the install is completed as *bootstrap-in-place* and require only 4 vcpu instead of 8 vcpu for **Agent-based Installer**. In case of resources scarcity like running locally on laptop, it makes sense to keep this option available.    
+
+The **Agent-based Installer** will require an extra `agent-config.yaml` to set up the *rendezvousIP*. In the case of DHCP, this will be the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method seems to work for OKD even though it is not present in the documentation.
+
+2. plateform options
+
+**Agent-based Installer** support only those 3 plateforms options below:
+
+- *none*, the only possible option for **single-node installer** but works also on all raw install (like for a baremetal without BMC).
+
+   Requirements for *plateform: none{}*:
+
+      - `networkType: OVNKubernetes`
+
+      - DNS for `*.api.<domain>` and `apps.<domain>` pointing to the Loadbalancer.
+
+      - DNS and reverse DNS (PTR) for all masters and workers is required
+
+      - DHCP services to provide IP addresses to nodes during installation.
+
+      - Loadbalancer for 6443 and 22623 if not standalone install ( since `apiVIPs` and `ingressVIPs` are not defined in *none* block )
+
+- *baremetal*, for hardware with BMC or for configuring dual stacks network.
+
+   Requirements for *plateform: baremetal{}*:
+
+      - if `apiVIPs` and `ingressVIPs` are defined in the config, no need for loadbalancing
+
+      - if static IP defined then no DHCP
+
+      - if Outcome iso - no PXE boot server
+
+      - only DNS for `*.api.<domain>` and `apps.<domain>` is required
+
+- *vsphere*, does not concern us since this project focus mainly on baremetal.
+
+4. Diverse "Helpers" are present as ansible roles but the best would be to use pfsense vm or router:
+
+- DNS = Bind server.
+
+- DHCP = DHCP server.
+
+- PXE server = TFTP server.
+
+- Loadbalancer = HAproxy server.
+
+5. Diverse Installer Outcome
+
+- an bootable iso to burn on USB stick
+
+- pxe boot to push on *helper server* or in the KVM embended TFTP server.
 
 ## References
 
