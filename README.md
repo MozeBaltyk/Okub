@@ -25,19 +25,47 @@ Add to above list, an *helper node* or *pfsense* to provide following services: 
 1. Get a Pull Secret and set it in `.docker/config.json`
 
 ```json
-
+{
+  "auths": {
+    "cloud.openshift.com": {
+      "auth": "<snip>",
+      "email": "<user's email>"
+    },
+    "quay.io": {
+      "auth": "<snip>",
+      "email": "<user's email>"
+    },
+    "registry.connect.redhat.com": {
+      "auth": "<snip>",
+      "email": "<user's email>"
+    },
+    "registry.redhat.io": {
+      "auth": "<snip>",
+      "email": "<user's email>"
+    }
+  }
+}
 ```
 
 2.  Clone this project and get inside
+
 ```sh
 git clone https://github.com/mozebaltyk/Okub.git
 ```
 
 * init a project
 
-* create a helper if needed
+```sh
+just init iso
+```
 
 * deploy OCP/OKD on KVM
+
+```sh
+just ocp create
+
+just ocp destroy
+```
 
 
 ## Troubleshootings
