@@ -47,6 +47,29 @@ Add to above list, an *helper node* or *pfsense* to provide following services: 
 }
 ```
 
+if KVM is used
+
+```bash
+sudo apt update
+sudo apt install cpu-checker
+sudo kvm-ok
+
+#Basic
+sudo apt -y install libvirt-daemon-system bridge-utils qemu-kvm libvirt-daemon
+
+#Extra tools
+sudo apt install virtinst libosinfo-bin virt-top libguestfs-tools 
+sudo apt install xsltproc uidmap
+
+# GUI tools
+sudo apt -y install qemu-system virt-manager 
+
+sudo addgroup kvm
+sudo adduser `id -un` libvirt-qemu
+sudo adduser `id -un` kvm
+newgrp libvirt
+```
+
 2.  Clone this project and get inside
 
 ```sh
