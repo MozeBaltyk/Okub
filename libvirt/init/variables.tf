@@ -88,6 +88,12 @@ variable "install_disk" {
   default    = "/dev/sda"
 }
 
+variable "size_partition" {
+  description = "Size of the partition to create for LVM storage"
+  type        = number
+  default     = 0
+}
+
 # Data sources
 data "http" "okd_latest_release" {
   url = "https://api.github.com/repos/okd-project/okd/releases/latest"

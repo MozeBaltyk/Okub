@@ -10,6 +10,11 @@ mkdir -p $${OKUB_INSTALL_PATH}/cache
 
 if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
   # Agent Based
+  if [[ -f bu/create-a-partition-for-lvmstorage.bu ]]; then
+    $${OKUB_INSTALL_PATH}/bin/openshift-install agent cluster-manifests --dir $${OKUB_INSTALL_PATH}
+    # Create a partition for LVM storage
+    $${OKUB_INSTALL_PATH}/bin/butane bu/create-a-partition-for-lvmstorage.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-for-lvmstorage.yaml
+  fi
   $${OKUB_INSTALL_PATH}/bin/openshift-install agent create image --dir $${OKUB_INSTALL_PATH}
   cp -pr $${OKUB_INSTALL_PATH}/agent.x86_64.iso $${OKUB_INSTALL_PATH}/cache/rhcos-master.iso
   cp -pr $${OKUB_INSTALL_PATH}/agent.x86_64.iso $${OKUB_INSTALL_PATH}/cache/rhcos-worker.iso
@@ -18,6 +23,10 @@ else
   if [[ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]]; then
     # Create Manifest (needed for SNO since no agent-config.yaml)
     $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
+    if [[ -f bu/create-a-partition-for-lvmstorage.bu ]]; then
+      # Create a partition for LVM storage
+      $${OKUB_INSTALL_PATH}/bin/butane bu/create-a-partition-for-lvmstorage.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-for-lvmstorage.yaml
+    fi
     # Ignition
     $${OKUB_INSTALL_PATH}/bin/openshift-install create single-node-ignition-config --dir $${OKUB_INSTALL_PATH}
   fi

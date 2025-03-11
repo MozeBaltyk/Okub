@@ -124,6 +124,17 @@ resource "local_file" "agent-config" {
   }
 }
 
+resource "local_file" "partition_script" {
+  count = var.size_partition != 0 ? 1 : 0
+
+  content  = templatefile("${path.module}/template/create-a-partition-for-lvmstorage.bu.tftpl", {
+    ocp_version = var.release_version,
+    install_disk = var.install_disk,
+    size_partition = var.size_partition,
+  })
+  filename = "${var.okub_install_path}/bu/create-a-partition-for-lvmstorage.bu"
+}
+
 resource "local_file" "iso_script" {
   content  = templatefile("${path.module}/template/iso.sh.tftpl", {
     okub_install_path = var.okub_install_path,

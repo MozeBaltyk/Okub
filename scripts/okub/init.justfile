@@ -19,6 +19,8 @@ INTERNAL_REGISTRY  :=  env_var_or_default('INTERNAL_REGISTRY', "")
 MACADRESS_MASTERS  :=  env_var_or_default('MACADRESS_MASTERS', '"52:54:00:35:fc:d8", "52:54:00:4f:12:5a", "52:54:00:e2:19:9d"')
 MACADRESS_WORKERS  :=  env_var_or_default('MACADRESS_WORKERS', '"52:54:00:9a:7b:66", "52:54:00:5b:ec:b3"')
 INTERFACE          :=  env_var_or_default('INTERFACE', "ens3")
+# IF COREOS SHOULD NOT TAKE ALL THE DISK SPACE
+SIZE_PARTITION     :=  env_var_or_default('SIZE_PARTITION', "0")
 
 # Initialize OCP install
 init_install *outcome:
@@ -43,6 +45,7 @@ init_install *outcome:
       -var "lb_bool={{ LB_BOOL }}" \
       -var "helper_bool={{ HELPER_BOOL }}" \
       -var "option={{ outcome }}" \
+      -var "size_partition={{ SIZE_PARTITION }}" \
       ;
     cd ../../libvirt/init && tofu apply "terraform.tfplan";
     if [ "{{ outcome }}" == "iso" ]; then
@@ -75,6 +78,7 @@ reset_install:
       -var "dhcp_bool={{ DHCP_BOOL }}" \
       -var "lb_bool={{ LB_BOOL }}" \
       -var "helper_bool={{ HELPER_BOOL }}" \
+      -var "size_partition={{ SIZE_PARTITION }}" \
     ;
     rm -rf {{ OKUB_INSTALL_PATH }}/auth
     rm -f {{ OKUB_INSTALL_PATH }}/metadata.json
