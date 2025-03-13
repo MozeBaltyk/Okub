@@ -3,7 +3,7 @@ variant: openshift
 version: ${ocp_version}.0
 metadata:
   labels:
-    machineconfiguration.openshift.io/role: worker
+    machineconfiguration.openshift.io/role: "*"
   name: 98-create-a-partition-for-lvmstorage
 storage:
   disks:
