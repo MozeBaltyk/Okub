@@ -16,6 +16,12 @@ variable "tftpboot_path" {
   default     = "/var/lib/tftpboot/"
 }
 
+variable "okub_root_path" {
+  description = "Root path for OKUB"
+  type        = string
+  default     = "/home"
+}
+
 # To be defined by the user
 variable "okub_install_path" {
   description = "OKUB install path"
@@ -79,7 +85,7 @@ variable "lb_bool" {
 
 # Set locally
 locals {
-  okub_pool_path      = "/home/${var.clusterid}/pool"
+  okub_pool_path      = "${var.okub_root_path}/${var.clusterid}/pool"
   okub_cache_path = "${var.okub_install_path}/cache"
   subdomain = "${var.clusterid}.${var.domain}"
   master_details = tolist([
