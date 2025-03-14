@@ -76,6 +76,14 @@ newgrp libvirt
 git clone https://github.com/mozebaltyk/Okub.git
 ```
 
+* get a first look a the project:
+
+```sh
+# Get a first look
+cd Okub
+just
+```
+
 * init a project
 
 ```sh
