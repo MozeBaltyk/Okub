@@ -14,7 +14,11 @@ printf "\e[1;34m[INFO]\e[m Generate PXE boot files\n";
 
 if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
     # Agent Based
-    #$${OKUB_INSTALL_PATH}/bin/openshift-install agent create cluster-manifests --dir $${OKUB_INSTALL_PATH}
+    if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-for-lvmstorage.bu ]]; then
+      $${OKUB_INSTALL_PATH}/bin/openshift-install agent cluster-manifests --dir $${OKUB_INSTALL_PATH}
+      # Create a partition for LVM storage
+      $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-for-lvmstorage.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-for-lvmstorage.yaml
+    fi
     $${OKUB_INSTALL_PATH}/bin/openshift-install agent create pxe-files --dir $${OKUB_INSTALL_PATH}
 
     # boot.ipxe
@@ -30,6 +34,10 @@ else
     if [[ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]]; then
       # Create Manifest (needed for SNO since no agent-config.yaml)
       $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
+      if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-for-lvmstorage.bu ]]; then
+        # Create a partition for LVM storage
+        $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-for-lvmstorage.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-for-lvmstorage.yaml
+      fi
       # Ignition
       $${OKUB_INSTALL_PATH}/bin/openshift-install create single-node-ignition-config --dir $${OKUB_INSTALL_PATH}
     fi
