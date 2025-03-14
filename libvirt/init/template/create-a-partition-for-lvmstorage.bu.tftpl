@@ -3,12 +3,12 @@ variant: openshift
 version: ${ocp_version}.0
 metadata:
   labels:
-    machineconfiguration.openshift.io/role: worker
+    machineconfiguration.openshift.io/role: "*"
   name: 98-create-a-partition-for-lvmstorage
 storage:
   disks:
   - device: ${install_disk}
     partitions:
-    - label: lvm-storage       # applying a label to the partition allows us to use nice names like /dev/disk/by-partlabel/lvmstorage instead of /dev/nvme0n1p3 
+    - label: lvm-storage     # applying a label to the partition allows us to use nice names like /dev/disk/by-partlabel/lvmstorage instead of /dev/nvme0n1p3 
       start_mib: ${size_partition}   # let CoreOS use the first 100GB (minimum 25000 MiB, recommend 120000 MiB or more)
-      size_mib:  0             # any size, or "0" to use the rest of the disk
+      size_mib:  0           # any size, or "0" to use the rest of the disk
