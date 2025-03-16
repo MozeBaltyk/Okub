@@ -11,14 +11,17 @@ This Project provides CLI tools to help OKD/OCP deployment with a special focus 
 
 1. Type of Architecture and Requirements
 
-| Topology                     | Nb of control planes | Nb of compute nodes | vCPU         | Memory       | Storage | install method |
-|------------------------------|----------------------|---------------------|--------------|--------------|---------|----------------|
-| Single-node cluster          | 1                    | 0                   | 4 vCPU cores | 16 GB of RAM | 120 GB  | UPI sno        |
-| Single-node cluster extended | 1                    | 1 or above          | 8 vCPU cores | 16 GB of RAM | 120 GB  | UPI sno + add  |
-| Compact cluster              | 3                    | 0 or 1              | 8 vCPU cores | 16 GB of RAM | 120 GB  | ABI            |
-| HA cluster                   | 3                    | 2 and above         | 8 vCPU cores | 16 GB of RAM | 120 GB  | ABI            |
+| Topology                     | Nb of control planes | Nb of compute nodes | vCPU           | Memory       | Storage | install method                      |
+|------------------------------|----------------------|---------------------|----------------|--------------|---------|-------------------------------------|
+| Single-node cluster          | 1                    | 0                   | 4/8 vCPU cores | 16 GB of RAM | 120 GB  | UPI sno for iso / ABI for pxe       |
+| Single-node cluster extended | 1                    | 1 or above          | 8 vCPU cores   | 16 GB of RAM | 120 GB  | UPI sno + add                       |
+| Compact cluster              | 3                    | 0 or 1              | 8 vCPU cores   | 16 GB of RAM | 120 GB  | ABI                                 |
+| HA cluster                   | 3                    | 2 and above         | 8 vCPU cores   | 16 GB of RAM | 120 GB  | ABI                                 |
 
 Add to above list, an *helper node* or *pfsense* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry). In case of deployment on KVM, the DNS, DHCP and TFTP are embeded in KVM to avoid changes on the host's network config.
+
+NB: SNO installation provide a *bootstrap-in-place-for-live-iso.ign* which works only for iso boot (not working for pxeboot).
+The UPI require only 4 CPU when ABI require 8 cpu.
 
 ## Getting started
 
@@ -87,6 +90,12 @@ just
 * init a project
 
 ```sh
+export PRODUCT="okd"
+export RELEASE_VERSION="4.15"
+export MASTERS=1
+export DHCP_BOOL=true
+export TYPE_OF_INSTALL="iso"
+
 just init iso
 ```
 

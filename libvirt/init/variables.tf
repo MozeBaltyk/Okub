@@ -91,7 +91,7 @@ variable "install_disk" {
 variable "size_partition" {
   description = "Size of the partition to create for LVM storage"
   type        = number
-  default     = 0
+  default     = 0 #mean all disk for coreos 
 }
 
 # Data sources
@@ -190,6 +190,9 @@ locals {
   # check SNO
   sno_install = var.masters_number == 1 && var.workers_number == 0
 
+  # check SNO
+  # sno_install = (var.masters_number == 1 && var.workers_number == 0) || var.option == "pxe"
+
   # Network configuration
   subdomain = "${var.clusterid}.${var.domain}"
   gateway_ip = cidrhost(var.network_cidr, 1)
@@ -198,8 +201,8 @@ locals {
   ingress_vip = var.lb_bool ? null : cidrhost(var.network_cidr, 8)
   # if lb_bool is true then defined
   lb_vip = var.lb_bool ? local.gateway_ip : null
-  # if SNO is false then defined (first master)
-  rendezvous_ip = local.sno_install ? null : cidrhost(var.network_cidr, 10)
+  # if SNO is false and iso install then defined (first master)
+  rendezvous_ip = (local.sno_install && var.option == "iso") ? null : cidrhost(var.network_cidr, 10)
   # if helper is true
   helper_ip = var.helper_bool ? cidrhost(var.network_cidr, 3) : null
   dns_server_ip = var.helper_bool ? local.helper_ip : local.gateway_ip

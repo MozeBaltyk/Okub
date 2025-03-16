@@ -20,7 +20,7 @@ variable "okub_root_path" {
   description = "Root path for OKUB"
   type        = string
   default     = "/home"
-}
+} 
 
 # To be defined by the user
 variable "okub_install_path" {
@@ -93,7 +93,7 @@ locals {
       name = format("master%02d", m + 1)
       ip   = cidrhost(var.network_cidr, m + 10)
       mac  = var.masters_mac_addresses[m]
-      cpu = 4
+      cpu = 8
       memory = 16 * 1024
     }])
   worker_details = tolist([

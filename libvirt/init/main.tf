@@ -99,7 +99,7 @@ resource "local_file" "install-config" {
 # Generate template agent-config.yaml (if SNO false)
 resource "local_file" "agent-config" {
   depends_on = [null_resource.download_and_extract_openshift_install]
-  count    = local.sno_install ? 0 : 1
+  count    = local.rendezvous_ip != null ? 1 : 0
   content = templatefile("./template/agent-config.yaml.tftpl",
     {
         clusterid = var.clusterid,
