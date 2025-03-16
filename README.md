@@ -20,8 +20,9 @@ This Project provides CLI tools to help OKD/OCP deployment with a special focus 
 
 Add to above list, an *helper node* or *pfsense* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry). In case of deployment on KVM, the DNS, DHCP and TFTP are embeded in KVM to avoid changes on the host's network config.
 
-NB: SNO installation provide a *bootstrap-in-place-for-live-iso.ign* which works only for iso boot (not working for pxeboot).
-The UPI require only 4 CPU when ABI require 8 cpu.
+NB: SNO installation provide a *bootstrap-in-place-for-live-iso.ign* which works only for iso boot (but not for pxeboot).
+The UPI require only 4 CPU when ABI require 8 cpu. For an SNO install, it understandable to have a usb drive to boot on baremetal. 
+But it become a constraint when there is 3 masters with the Agent Based Install which need to booted in the same time.  
 
 ## Getting started
 
