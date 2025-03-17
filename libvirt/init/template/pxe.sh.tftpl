@@ -15,63 +15,90 @@ PRODUCT=${product}
 printf "\e[1;34m[INFO]\e[m Generate PXE boot files\n";
 
 if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
-    # Agent Based
-    $${OKUB_INSTALL_PATH}/bin/openshift-install agent create pxe-files --dir $${OKUB_INSTALL_PATH}
 
-    # boot.ipxe
-    cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/boot.ipxe" <<EOF
+  if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu ]]; then
+    # Create a partition for LVM storage
+    mkdir -p $${OKUB_INSTALL_PATH}/openshift
+    $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-master.yaml
+  fi
+
+  if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu ]]; then
+    # Create a partition for LVM storage
+    mkdir -p $${OKUB_INSTALL_PATH}/openshift
+    $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-worker.yaml
+  fi
+
+  if [[ -d "$${OKUB_INSTALL_PATH}/openshift" ]]; then
+    # generate manifests
+    $${OKUB_INSTALL_PATH}/bin/openshift-install agent create cluster-manifests --dir $${OKUB_INSTALL_PATH}
+  fi
+
+  # Agent Based
+  $${OKUB_INSTALL_PATH}/bin/openshift-install agent create pxe-files --dir $${OKUB_INSTALL_PATH}   
+
+  # boot.ipxe
+  cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/boot.ipxe" <<EOF
 #!ipxe
 initrd --name initrd agent.x86_64-initrd.img
-kernel agent.x86_64-vmlinuz initrd=initrd coreos.live.rootfs_url=http://$${PXE_SERVER}:8000/boot-artifacts/agent.x86_64-rootfs.img mitigations=auto,nosmt ignition.firstboot ignition.platform.id=metal
+kernel agent.x86_64-vmlinuz initrd=initrd coreos.live.rootfs_url=http://$${PXE_SERVER}:8000/boot-artifacts/agent.x86_64-rootfs.img rw ignition.firstboot ignition.platform.id=metal
 boot
 EOF
 
 else
-    # UPI method
-    if [[ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]]; then
-      # Create Manifest (needed for SNO since no agent-config.yaml)
-      $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
-      if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-for-lvmstorage.bu ]]; then
-        # Create a partition for LVM storage
-        $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-for-lvmstorage.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-for-lvmstorage.yaml
-      fi
-      # Ignition
-      $${OKUB_INSTALL_PATH}/bin/openshift-install create single-node-ignition-config --dir $${OKUB_INSTALL_PATH}
+  # UPI method
+  if [[ -f $${OKUB_INSTALL_PATH}/install-config.yaml && ! -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]]; then
+    # Create Manifest (needed for SNO since no agent-config.yaml)
+    $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
+
+    if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu ]]; then
+      # Create a partition for LVM storage
+      mkdir -p $${OKUB_INSTALL_PATH}/openshift
+      $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-master.yaml
     fi
 
-    URL_COREOS_KERNEL=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.kernel.location)
-    URL_COREOS_INITRAMFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.initramfs.location)
-    URL_COREOS_ROOTFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.rootfs.location)
-
-    mkdir -p $${OKUB_INSTALL_PATH}/boot-artifacts
-
-    # Kernel
-    if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-vmlinuz ]; then
-    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_KERNEL##*/}\n";
-    curl -Ls $${URL_COREOS_KERNEL} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-vmlinuz
+    if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu ]]; then
+      # Create a partition for LVM storage
+      mkdir -p $${OKUB_INSTALL_PATH}/openshift
+      $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-worker.yaml
     fi
 
-    # Initramfs
-    if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img ]; then
-    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_INITRAMFS##*/}\n";
-    curl -Ls $${URL_COREOS_INITRAMFS} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img
-    fi
+    # Ignition
+    $${OKUB_INSTALL_PATH}/bin/openshift-install create single-node-ignition-config --dir $${OKUB_INSTALL_PATH}
+  fi
 
-    # Rootfs
-    if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-rootfs.img ]; then
-    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_ROOTFS##*/}\n";
-    curl -Ls $${URL_COREOS_ROOTFS} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-rootfs.img
-    fi
+  URL_COREOS_KERNEL=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.kernel.location)
+  URL_COREOS_INITRAMFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.initramfs.location)
+  URL_COREOS_ROOTFS=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r .architectures.x86_64.artifacts.metal.formats.pxe.rootfs.location)
 
-    # Config
-    if [ $${MASTERS} -eq 1 ] && [ $${WORKERS} -eq 0 ]; then
-        WHICH_IGNITION=bootstrap-in-place-for-live-iso.ign
-    else
-        WHICH_IGNITION=bootstrap.ign
-    fi
+  mkdir -p $${OKUB_INSTALL_PATH}/boot-artifacts
 
-    # boot.ipxe coreos.live.rootfs_url=\$${ROOTFSURL}
-    cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/boot.ipxe" <<EOF
+  # Kernel
+  if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-vmlinuz ]; then
+  printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_KERNEL##*/}\n";
+  curl -Ls $${URL_COREOS_KERNEL} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-vmlinuz
+  fi
+
+  # Initramfs
+  if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img ]; then
+  printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_INITRAMFS##*/}\n";
+  curl -Ls $${URL_COREOS_INITRAMFS} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-initrd.img
+  fi
+
+  # Rootfs
+  if [ ! -f $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-rootfs.img ]; then
+  printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_ROOTFS##*/}\n";
+  curl -Ls $${URL_COREOS_ROOTFS} -o $${OKUB_INSTALL_PATH}/boot-artifacts/agent.x86_64-rootfs.img
+  fi
+
+  # Config
+  if [ $${MASTERS} -eq 1 ] && [ $${WORKERS} -eq 0 ]; then
+      WHICH_IGNITION=bootstrap-in-place-for-live-iso.ign
+  else
+      WHICH_IGNITION=bootstrap.ign
+  fi
+
+  # boot.ipxe coreos.live.rootfs_url=\$${ROOTFSURL}
+  cat > "$${OKUB_INSTALL_PATH}/boot-artifacts/boot.ipxe" <<EOF
 #!ipxe
 set INSTALLDEV /dev/sda
 set IGNITIONURL http://$${PXE_SERVER}:8000/$${WHICH_IGNITION}

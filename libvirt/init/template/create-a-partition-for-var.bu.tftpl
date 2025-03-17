@@ -1,0 +1,21 @@
+---
+variant: openshift
+version: ${ocp_version}.0
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: ${role}
+  name: 98-var-partition-${role}
+storage:
+  disks:
+  - device: ${install_disk}          # For disk sizes larger than 100GB, and especially larger than 1TB, create a separate /var partition.
+    partitions:
+    - label: var                     # applying a label to the partition allows us to use nice names like /dev/disk/by-partlabel/var instead of /dev/nvme0n1p3 
+      start_mib: ${size_partition}   # let CoreOS use the first 100GB (minimum 25000 MiB, recommend 120000 MiB or more)
+      size_mib:  0                   # size of the partition: any size, or "0" to use the rest of the disk
+      number: 5
+  filesystems:
+    - device: /dev/disk/by-partlabel/var
+      path: /var
+      format: xfs
+      mount_options: [defaults, prjquota]  # The prjquota mount option must be enabled for filesystems used for container storage.
+      with_mount_unit: true

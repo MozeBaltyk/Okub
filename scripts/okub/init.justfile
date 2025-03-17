@@ -80,10 +80,10 @@ reset_install:
       -var "helper_bool={{ HELPER_BOOL }}" \
       -var "size_partition={{ SIZE_PARTITION }}" \
     ;
-    rm -rf {{ OKUB_INSTALL_PATH }}/auth
+    rm -rf {{ OKUB_INSTALL_PATH }}/{auth,mirror}
     rm -f {{ OKUB_INSTALL_PATH }}/metadata.json
     rm -f {{ OKUB_INSTALL_PATH }}/.openshift_install.log
     rm -f {{ OKUB_INSTALL_PATH }}/.openshift_install_state.json
     rm -f {{ OKUB_INSTALL_PATH }}/cache/rhcos-master.iso
     rm -f {{ OKUB_INSTALL_PATH }}/cache/rhcos-worker.iso
-    rm -f {{ OKUB_INSTALL_PATH }}/cache/{worker.ign,bootstrap-in-place-for-live-iso.ign,bootstrap.ign,agent.x86_64.iso,rendezvousIP}
+    rm -f {{ OKUB_INSTALL_PATH }}/{worker.ign,bootstrap-in-place-for-live-iso.ign,bootstrap.ign,agent.x86_64.iso,rendezvousIP}

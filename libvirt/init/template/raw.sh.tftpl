@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -e
+
+OKUB_INSTALL_PATH="../"
+
+# Download images in cache
+mkdir -p $${OKUB_INSTALL_PATH}/cache
+
+if [ $${PRODUCT} == okd ]; then
+    PATH_COREOS_RAW="$${OKUB_INSTALL_PATH}/cache/rhcos-metal.x86_64.raw.xz"
+    PATH_COREOS_QCOW2="$${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.xz"
+
+    URL_COREOS_QCOW2=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.xz"].disk.location')
+    if [ ! -f $${PATH_COREOS_QCOW2} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_QCOW2##*/} as rhcos-qemu.x86_64.qcow2.xz\n";
+    curl -Ls $${URL_COREOS_QCOW2} -o $${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.xz
+    fi
+
+    URL_COREOS_RAW=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.metal.formats["raw.xz"].disk.location')
+    if [ ! -f $${PATH_COREOS_RAW} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_RAW##*/} as rhcos-metal.x86_64.raw.xz\n";
+    curl -Ls $${URL_COREOS_RAW} -o $${OKUB_INSTALL_PATH}/cache/rhcos-metal.x86_64.raw.xz
+    fi
+
+elif [ $${PRODUCT} == ocp ]; then
+    PATH_COREOS_RAW="$${OKUB_INSTALL_PATH}/cache/rhcos-metal.x86_64.raw.gz"
+    PATH_COREOS_QCOW2="$${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.gz"
+
+    URL_COREOS_QCOW2=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.qemu.formats["qcow2.gz"].disk.location')
+    if [ ! -f $${PATH_COREOS_QCOW2} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_QCOW2##*/} as rhcos-qemu.x86_64.qcow2.gz\n";
+    curl -Ls $${URL_COREOS_QCOW2} -o $${OKUB_INSTALL_PATH}/cache/rhcos-qemu.x86_64.qcow2.gz
+    fi
+
+    URL_COREOS_RAW=$($${OKUB_INSTALL_PATH}/bin/openshift-install coreos print-stream-json | jq -r '.architectures.x86_64.artifacts.metal.formats["raw.gz"].disk.location')
+    if [ ! -f $${PATH_COREOS_RAW} ]; then
+    printf "\e[1;34m[INFO]\e[m Download $${URL_COREOS_RAW##*/} as rhcos-metal.x86_64.raw.gz\n";
+    curl -Ls $${URL_COREOS_RAW} -o $${OKUB_INSTALL_PATH}/cache/rhcos-metal.x86_64.raw.gz
+    fi
+fi
+

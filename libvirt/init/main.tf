@@ -95,7 +95,6 @@ resource "local_file" "install-config" {
   }
 }
 
-
 # Generate template agent-config.yaml (if SNO false)
 resource "local_file" "agent-config" {
   depends_on = [null_resource.download_and_extract_openshift_install]
@@ -111,10 +110,12 @@ resource "local_file" "agent-config" {
         master_details = local.master_details,
         worker_details = local.worker_details,
         gateway_ip = local.gateway_ip,
+        pxe_server_ip = local.pxe_server_ip,
         dns_server_ip = local.dns_server_ip,
         network_interface = var.network_interface,
-        lb_bool = var.lb_bool, 
+        lb_bool = var.lb_bool,
         dhcp_bool = var.dhcp_bool,
+        option = var.option,
     }
   )
   filename = "${var.okub_install_path}/agent-config.yaml"
@@ -124,15 +125,28 @@ resource "local_file" "agent-config" {
   }
 }
 
-resource "local_file" "partition_script" {
+resource "local_file" "partition_var_for_master" {
   count = var.size_partition != 0 ? 1 : 0
 
-  content  = templatefile("${path.module}/template/create-a-partition-for-lvmstorage.bu.tftpl", {
+  content  = templatefile("${path.module}/template/create-a-partition-for-var.bu.tftpl", {
     ocp_version = var.release_version,
     install_disk = var.install_disk,
     size_partition = var.size_partition,
+    role = "master",
   })
-  filename = "${var.okub_install_path}/bu/create-a-partition-for-lvmstorage.bu"
+  filename = "${var.okub_install_path}/bu/create-a-partition-var-for-master.bu"
+}
+
+resource "local_file" "partition_var_for_worker" {
+  count = (var.size_partition != 0 && var.workers_number != 0) ? 1 : 0
+
+  content  = templatefile("${path.module}/template/create-a-partition-for-var.bu.tftpl", {
+    ocp_version = var.release_version,
+    install_disk = var.install_disk,
+    size_partition = var.size_partition,
+    role = "worker",
+  })
+  filename = "${var.okub_install_path}/bu/create-a-partition-var-for-worker.bu"
 }
 
 resource "local_file" "iso_script" {

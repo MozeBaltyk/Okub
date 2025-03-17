@@ -79,7 +79,7 @@ variable "network_interface" {
 variable "option" {
   description = "Option for which outcome (iso/pxeboot/just manifests)"
   type        = string
-  default    = ""
+  default     = ""
 }
 
 variable "install_disk" {

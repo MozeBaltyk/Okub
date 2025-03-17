@@ -4,6 +4,9 @@ kind: AgentConfig
 metadata:
   name: ${clusterid}
 rendezvousIP: ${rendezvous_ip}
+%{ if option == "pxe" ~}
+bootArtifactsBaseURL: http://${pxe_server_ip}:8000
+%{ endif ~}
 %{ if dhcp_bool == false ~}
 hosts:
 %{ for master in master_details ~}

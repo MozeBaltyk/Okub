@@ -133,7 +133,7 @@ systemctl status bootkube -l
 systemctl status kubelet -l
 
 # Check if the certificate is still valid
-[ $(jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' .openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ] && echo OK || echo NOK
+[[ $(jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' .openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ]] && echo OK || echo NOK
 ```
 
 After first reboot, fs should be setup:
