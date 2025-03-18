@@ -9,18 +9,11 @@ printf "\e[1;34m[INFO]\e[m Generate iso.\n";
 mkdir -p $${OKUB_INSTALL_PATH}/cache
 
 if [ -f $${OKUB_INSTALL_PATH}/agent-config.yaml ]; then
-  # Agent Based
-  if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu ]]; then
-    # Create a partition for LVM storage
+  # Agent Based install
+  for bu in $(ls $${OKUB_INSTALL_PATH}/bu); do
     mkdir -p $${OKUB_INSTALL_PATH}/openshift
-    $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-master.yaml
-  fi
-
-  if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu ]]; then
-    # Create a partition for LVM storage
-    mkdir -p $${OKUB_INSTALL_PATH}/openshift
-    $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-worker.yaml
-  fi
+    $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/$${bu} -o $${OKUB_INSTALL_PATH}/openshift/98-$${bu%%.*}.yaml
+  done
 
   if [[ -d "$${OKUB_INSTALL_PATH}/openshift" ]]; then
     # generate manifests
@@ -37,17 +30,10 @@ else
     # Create Manifest (needed for SNO since no agent-config.yaml)
     $${OKUB_INSTALL_PATH}/bin/openshift-install create manifests --dir $${OKUB_INSTALL_PATH}
 
-    if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu ]]; then
-      # Create a partition for LVM storage
+    for bu in $(ls $${OKUB_INSTALL_PATH}/bu); do
       mkdir -p $${OKUB_INSTALL_PATH}/openshift
-      $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-master.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-master.yaml
-    fi
-
-    if [[ -f $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu ]]; then
-      # Create a partition for LVM storage
-      mkdir -p $${OKUB_INSTALL_PATH}/openshift
-      $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/create-a-partition-var-for-worker.bu -o $${OKUB_INSTALL_PATH}/openshift/98-create-a-partition-var-for-worker.yaml
-    fi
+      $${OKUB_INSTALL_PATH}/bin/butane $${OKUB_INSTALL_PATH}/bu/$${bu} -o $${OKUB_INSTALL_PATH}/openshift/98-$${bu%%.*}.yaml
+    done
 
     # Ignition
     $${OKUB_INSTALL_PATH}/bin/openshift-install create single-node-ignition-config --dir $${OKUB_INSTALL_PATH}
