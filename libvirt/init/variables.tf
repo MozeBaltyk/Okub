@@ -88,7 +88,7 @@ variable "install_disk" {
   default    = "/dev/sda"
 }
 
-variable "size_partition" {
+variable "size_partition_var" {
   description = "Size of the partition to create for LVM storage"
   type        = number
   default     = 0 #mean all disk for coreos 

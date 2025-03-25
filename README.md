@@ -96,7 +96,7 @@ just
 export PRODUCT="okd"
 export RELEASE_VERSION="4.15"
 export MASTERS=1
-export DHCP_BOOL=true  # for install on KVM 
+export DHCP_BOOL=true  #for install on KVM 
 export TYPE_OF_INSTALL="iso"
 
 just init iso
@@ -110,6 +110,7 @@ just ocp create
 just ocp destroy
 ```
 
+Note that Masters/workers IPs are given following the MACHINENETWORK env var. 
 
 ## Troubleshootings
 
