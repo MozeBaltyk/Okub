@@ -61,7 +61,7 @@ init_install *outcome:
 reset_install:
     #!/usr/bin/env bash
     set -e
-    printf "\e[1;34m[INFO]\e[m Destroy OCP isntall.\n";
+    printf "\e[1;34m[INFO]\e[m Destroy OCP install.\n";
     cd ../../libvirt/init && tofu destroy -auto-approve \
       -var "product={{ PRODUCT }}" \
       -var "release_version={{RELEASE_VERSION}}" \
