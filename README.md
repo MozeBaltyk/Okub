@@ -227,8 +227,6 @@ https://github.com/cgruver/kamarotos/blob/main/agent-install.md
 
 * KVM
 
-https://github.com/jmutai/ocp4_ansible
-
 https://github.com/lgchiaretto/ocp4_setup_upi_kvm_ansible/tree/master
 
 https://fajlinuxblog.medium.com/openshift-running-as-single-node-with-libvirt-kvm-cb615d2c43e6
@@ -237,12 +235,17 @@ https://fajlinuxblog.medium.com/openshift-running-as-single-node-with-libvirt-kv
 
 https://guifreelife.com/blog/2022/05/13/OpenShift-Virtualization-on-vSphere/
 
-
 * Airgap
 
 https://www.redhat.com/en/blog/red-hat-openshift-disconnected-installations
 
 https://two-oes.medium.com/openshift-4-in-an-air-gap-disconnected-environment-part-2-installation-1dd8bf085fdd
+
+* Terraform modules
+
+https://github.com/sawa2d2/k8s-on-kvm
+
+https://github.com/amrut-asm/homelab
 
 
 ## Roadmap
