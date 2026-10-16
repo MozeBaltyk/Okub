@@ -1,0 +1,31 @@
+## Render/Deploy target. `Pod` (default) keeps `podman play kube --replace`/`--down`
+## working by a stable pod name; `Deployment` targets a real Kubernetes cluster
+## (adds replicas/selector and uses a plain emptyDir instead of a hostPath mount).
+deployAs: Pod
+
+## Replica count — Deployment mode only.
+replicas: 1
+
+## The image built from the project's Containerfile (`just build`).
+image:
+  repository: localhost/okub-ee
+  tag: latest
+  pullPolicy: IfNotPresent
+
+## Command the container runs. `sleep infinity` keeps the execution environment
+## alive so you can `exec` into it; replace with your own entrypoint.
+command:
+  - sleep
+  - infinity
+
+## Project workspace mounted at /workspace inside the pod (the whole repo, so
+## `just` and `scripts/` are available). In Pod mode the host path (repo root)
+## is mounted via hostPath; in Deployment mode it is a plain emptyDir — provide
+## an init container to populate that volume, or customize the template to mount
+## a populated PVC/ConfigMap. COPY to /workspace in the image is hidden by the mount.
+workspace:
+  # Absolute host path mounted at /workspace in Pod mode (manage.sh overrides
+  # this with the resolved repo root). Must contain a leading "/" — Podman treats
+  # a value without one as a named volume, not a bind mount.
+  hostPath: ""
+  mountPath: /workspace

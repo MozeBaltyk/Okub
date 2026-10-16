@@ -1,0 +1,6 @@
+apiVersion: v2
+name: okub-ee
+description: Execution Environment (okub-ee) — deployable locally with podman or on Kubernetes with Helm
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

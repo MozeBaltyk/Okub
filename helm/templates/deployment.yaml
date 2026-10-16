@@ -1,0 +1,22 @@
+{{- if eq .Values.deployAs "Deployment" }}
+# Real-K8s mode: same pod spec as pod.yaml, wrapped in a Deployment with
+# configurable replicas and an emptyDir instead of the Pod hostPath (see
+# _podspec.tpl). No hostPorts here — expose your own Service/Ingress as needed.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: okub-ee
+  labels:
+    app.kubernetes.io/name: okub-ee
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: okub-ee
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: okub-ee
+    spec:
+      {{- include "okub-ee.podspec" . | nindent 6 }}
+{{- end }}

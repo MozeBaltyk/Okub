@@ -34,3 +34,8 @@ AWS
 venv
 .venv
 .aider*
+# Go build output
+/bin/
+/okub
+# EE / justfile local config (REGISTRY_URL, EE_IMAGE, ...)
+.env

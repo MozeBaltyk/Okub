@@ -1,0 +1,14 @@
+{{- if eq .Values.deployAs "Pod" }}
+# Pod kind on purpose for `podman play kube`: a Deployment is flattened to a
+# pod and renamed (`okub-ee` -> `okub-ee-pod`), which breaks `--replace`/`--down`
+# lifecycle matching. Keep a Pod here so podman manages it by the stable name
+# `okub-ee`. For a real K8s cluster, set `deployAs: Deployment` (deployment.yaml).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: okub-ee
+  labels:
+    app.kubernetes.io/name: okub-ee
+spec:
+  {{- include "okub-ee.podspec" . | nindent 2 }}
+{{- end }}
