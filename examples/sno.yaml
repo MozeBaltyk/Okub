@@ -1,0 +1,41 @@
+apiVersion: okub.io/v1alpha1
+kind: Cluster
+
+metadata:
+  name: lab
+
+cluster:
+  baseDomain: example.test
+  version: "4.20"
+  architecture: x86_64
+  topology: sno
+
+platform:
+  type: none
+
+network:
+  machineCIDR: 192.168.100.0/24
+  clusterCIDR: 10.128.0.0/14
+  hostPrefix: 23
+  serviceCIDR: 172.30.0.0/16
+  dnsServers:
+    - 192.168.100.1
+  gateway: 192.168.100.1
+  apiVIP: 192.168.100.10
+  ingressVIP: 192.168.100.11
+
+hosts:
+  - name: master-0
+    role: master
+    interfaces:
+      - name: eno1
+        macAddress: "52:54:00:00:00:10"
+    address: 192.168.100.20/24
+    installationDisk: /dev/vda
+
+boot:
+  method: iso
+
+credentials:
+  pullSecretFile: ~/.config/okub/pull-secret.json
+  sshPublicKeyFile: ~/.ssh/id_ed25519.pub

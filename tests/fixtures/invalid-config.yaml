@@ -1,0 +1,23 @@
+apiVersion: okub.io/v1alpha1
+kind: Cluster
+metadata:
+  name: Bad_Name
+cluster:
+  baseDomain: bad.example.
+  version: "4.20"
+  architecture: x86_64
+  topology: sno
+platform:
+  type: none
+network:
+  machineCIDR: 192.168.1.0/24
+  clusterCIDR: 192.168.1.0/25
+  hostPrefix: 25
+  serviceCIDR: 192.168.1.128/25
+  dnsServers: []
+hosts: []
+boot:
+  method: iso
+credentials:
+  pullSecretFile: pull-secret.json
+  sshPublicKeyFile: id.pub

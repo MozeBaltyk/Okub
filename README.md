@@ -19,8 +19,8 @@ check prerequisites
 
 ## Status
 
-Okub is under active development. The CLI foundation exists; configuration,
-preflight, rendering, artifact generation, and serving are planned in the
+Okub is under active development. Strict configuration validation is available;
+preflight, rendering, artifact generation, and serving remain planned in the
 [delivery plan](docs/plan/summary.md).
 
 Do not use the current development build for unattended production changes.
@@ -64,7 +64,14 @@ just vet
 just test
 ./bin/okub --help
 ./bin/okub version
+./bin/okub config validate --config examples/sno.yaml
+./bin/okub config validate --config examples/sno.yaml --json
 ```
+
+Validation is local and read-only: it applies the documented configuration
+defaults and checks structure, names, addresses, networks, uniqueness, and
+topology. It does not read credential contents, query DNS, or run environmental
+preflight checks. The default input is `./okub.yaml`.
 
 The version can be injected at build time:
 

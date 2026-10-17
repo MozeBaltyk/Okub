@@ -140,7 +140,9 @@ credentials:
 | `credentials.sshPublicKeyFile` | yes | Readable OpenSSH public key file |
 
 Unknown fields are errors. Environment expansion inside YAML values is not
-performed. Leading `~/` is resolved only for documented path fields.
+performed. Leading `~/` is resolved only for artifact directories and local
+credential files. Installation disks are target-host identifiers and are never
+expanded as local paths.
 
 ### 3.2 Defaults
 

@@ -8,7 +8,7 @@ Libvirt validates that path; it is not a separate provider workstream.
 | Phase | Status | Outcome |
 |---|---|---|
 | [00](phase-00-repository-foundation.md) | complete | Repository and CLI foundation |
-| [01](phase-01-configuration-validation.md) | active | Strict, versioned `okub.yaml` validation |
+| [01](phase-01-configuration-validation.md) | complete | Strict, versioned `okub.yaml` validation |
 | [02](phase-02-installer-inputs.md) | planned | Deterministic installer configuration |
 | [03](phase-03-preflight.md) | planned | Bare-metal prerequisite report |
 | [04](phase-04-release-cache.md) | planned | Verified OKD tools and image cache |

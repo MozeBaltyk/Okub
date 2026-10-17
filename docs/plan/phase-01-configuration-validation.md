@@ -1,6 +1,6 @@
 # Phase 01 — Configuration and validation
 
-Status: active.
+Status: complete.
 
 ## Goal
 
