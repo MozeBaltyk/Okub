@@ -1,5 +1,5 @@
-// Command okub prepares, validates and bootstraps OpenShift/OKD clusters.
-// See docs/design.md for the target architecture.
+// Command okub prepares, validates and bootstraps bare-metal OKD clusters.
+// See docs/architectures/00-general.md for the target architecture.
 package main
 
 import (
@@ -19,6 +19,6 @@ func main() {
 			return
 		}
 	}
-	fmt.Fprintln(os.Stderr, "okub: not implemented yet — see docs/design.md")
+	fmt.Fprintln(os.Stderr, "okub: not implemented yet — see docs/plan/summary.md")
 	os.Exit(2)
 }

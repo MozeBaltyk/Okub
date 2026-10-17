@@ -2,7 +2,7 @@
 #  Containerfile — Okub development execution environment.
 #
 #  Purpose:  Single container image to run the justfile as if you were on your
-#            laptop: build/test the Go CLI and drive the OpenShift tooling.
+#            laptop: build/test the Go CLI and drive the OKD tooling.
 #
 #  Build:    just build          (multi-arch: amd64, arm64)
 #
@@ -10,7 +10,7 @@
 #
 #  Note:     openshift-install, coreos-installer and butane are deliberately
 #            NOT baked in. The okub CLI resolves and downloads pinned copies
-#            into its install path at runtime (see docs/design.md §9/§12), so
+#            into its install path at runtime (see docs/00-repo-contract.md), so
 #            bundling them here would only risk version drift.
 # ─────────────────────────────────────────────────────────────────────────────
 
