@@ -3,8 +3,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/mozebaltyk/Okub/internal/cli"
 )
 
 // version is overridden at build time:
@@ -12,13 +13,5 @@ import (
 var version = "dev"
 
 func main() {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "version", "--version", "-v":
-			fmt.Println("okub", version)
-			return
-		}
-	}
-	fmt.Fprintln(os.Stderr, "okub: not implemented yet — see docs/plan/summary.md")
-	os.Exit(2)
+	os.Exit(cli.Execute(os.Args[1:], version, os.Stdout, os.Stderr))
 }
