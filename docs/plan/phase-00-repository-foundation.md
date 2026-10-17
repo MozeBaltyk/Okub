@@ -1,6 +1,6 @@
 # Phase 00 — Repository foundation
 
-Status: active.
+Status: complete.
 
 ## Goal
 

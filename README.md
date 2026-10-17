@@ -1,263 +1,115 @@
-<h1 style="text-align: center;"><code> Ansible Collection - mozebaltyk.Okub  </code></h1>
+# Okub
 
-Collection to deploy OKD/OCP on baremetal
+Okub is a Go CLI that helps operators install **OKD on bare metal**.
+
+It guides the installation path without replacing `openshift-install`:
+
+```text
+check prerequisites
+  → validate okub.yaml
+  → render installer configuration
+  → resolve verified OKD tools and images
+  → build Agent ISO or PXE artifacts
+  → export or explicitly serve artifacts
+  → monitor installation
+```
 
 [![Releases](https://img.shields.io/github/release/mozebaltyk/Okub)](https://github.com/mozebaltyk/Okub/releases)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
-## Description and Prerequisites
+## Status
 
-This Project provides CLI tools to help OKD/OCP deployment with a special focus on baremetal.
+Okub is under active development. The CLI foundation exists; configuration,
+preflight, rendering, artifact generation, and serving are planned in the
+[delivery plan](docs/plan/summary.md).
 
-1. Type of Architecture and Requirements
+Do not use the current development build for unattended production changes.
+The archived Ansible implementation remains available under [`archive/`](archive/)
+for reference but is not maintained or executed by the Go application.
 
-| Topology                     | Nb of control planes | Nb of compute nodes | vCPU           | Memory       | Storage | install method                      |
-|------------------------------|----------------------|---------------------|----------------|--------------|---------|-------------------------------------|
-| Single-node cluster          | 1                    | 0                   | 4/8 vCPU cores | 16 GB of RAM | 120 GB  | UPI sno for iso / ABI for pxe       |
-| Single-node cluster extended | 1                    | 1 or above          | 8 vCPU cores   | 16 GB of RAM | 120 GB  | UPI sno + add                       |
-| Compact cluster              | 3                    | 0 or 1              | 8 vCPU cores   | 16 GB of RAM | 120 GB  | ABI                                 |
-| HA cluster                   | 3                    | 2 and above         | 8 vCPU cores   | 16 GB of RAM | 120 GB  | ABI                                 |
+## Scope
 
-NB: SNO installation provide a *bootstrap-in-place-for-live-iso.ign* which works only for iso boot (but not for pxeboot).
-The UPI require only 4 CPU when ABI require 8 cpu. For an SNO install, it understandable to have a usb drive to boot on baremetal. 
-But it become a constraint when there is 3 masters with the Agent Based Install which need to booted in the same time. 
-So the pxeboot become more relevant in this use case. 
+The MVP targets:
 
-Add to above list, an *helper node* or *pfsense* to provide following services: DNS / DHCP / PXE boot / LoadBalancer (+ eventually registry). 
-In case of deployment on KVM, the DNS, DHCP and TFTP are embeded in KVM to avoid changes on the host's network config.
+- OKD on physical bare-metal hosts;
+- `x86_64` SNO, compact, and HA topologies;
+- Agent-based Installer configuration;
+- existing DHCP/static networking, DNS, VIP, and load-balancer prerequisites;
+- Agent ISO and PXE artifact generation;
+- optional ephemeral HTTP/PXE artifact serving;
+- human-readable and JSON validation reports.
 
-## Getting started
+Libvirt is used only as disposable test infrastructure to validate the same
+artifacts and network path intended for physical hosts. It is not an Okub
+deployment target.
 
-1. Get a Pull Secret and set it in `.docker/config.json`
+Okub does not provide permanent DNS/DHCP/PXE services, reimplement
+`openshift-install`, or manage a cluster after installation.
 
-```json
-{
-  "auths": {
-    "cloud.openshift.com": {
-      "auth": "<snip>",
-      "email": "<user's email>"
-    },
-    "quay.io": {
-      "auth": "<snip>",
-      "email": "<user's email>"
-    },
-    "registry.connect.redhat.com": {
-      "auth": "<snip>",
-      "email": "<user's email>"
-    },
-    "registry.redhat.io": {
-      "auth": "<snip>",
-      "email": "<user's email>"
-    }
-  }
-}
-```
+## Development
 
-if KVM is used
+Requirements:
+
+- the Go version declared in [`go.mod`](go.mod);
+- [`just`](https://github.com/casey/just) for repository recipes;
+- Podman or Docker only when using the optional execution environment;
+- OpenTofu/libvirt only for privileged validation-lab scenarios.
+
+Build and check the CLI:
 
 ```bash
-sudo apt update
-sudo apt install cpu-checker
-sudo kvm-ok
-
-#Basic
-sudo apt -y install libvirt-daemon-system bridge-utils qemu-kvm libvirt-daemon
-
-#Extra tools
-sudo apt install virtinst libosinfo-bin virt-top libguestfs-tools 
-sudo apt install xsltproc uidmap
-
-# GUI tools
-sudo apt -y install qemu-system virt-manager 
-
-sudo addgroup kvm
-sudo adduser `id -un` libvirt-qemu
-sudo adduser `id -un` kvm
-newgrp libvirt
+just compile
+just fmt
+just vet
+just test
+./bin/okub --help
+./bin/okub version
 ```
 
-2.  Clone this project and get inside
-
-```sh
-git clone https://github.com/mozebaltyk/Okub.git
-```
-
-* get a first look a the project:
-
-```sh
-# Get a first look
-cd Okub
-just
-```
-
-* init a project
-
-```sh
-export PRODUCT="okd"
-export RELEASE_VERSION="4.15"
-export MASTERS=1
-export DHCP_BOOL=true  #for install on KVM 
-export TYPE_OF_INSTALL="iso"
-
-just init iso
-```
-
-* deploy OCP/OKD on KVM
-
-```sh
-just ocp create
-
-just ocp destroy
-```
-
-Note that Masters/workers IPs are given following the MACHINENETWORK env var. 
-
-## Troubleshootings
-
-Few tips for troubleshooting:
+The version can be injected at build time:
 
 ```bash
-cd ${OKUB_INSTALL_PATH}
-export KUBECONFIG=./auth/kubeconfig
-# Agent based install
-./bin/openshift-install --dir . agent wait-for bootstrap-complete --log-level=info
-./bin/openshift-install --dir . agent wait-for install-complete --log-level=info
-# SNO and other type of install 
-./bin/openshift-install --dir . wait-for bootstrap-complete --log-level=info
-./bin/openshift-install --dir . wait-for install-complete --log-level=info
-
-/bin/oc get co
-
-# Connect in ssh to first master node
-journalctl -u bootkube --no-pager | tail -50
-journalctl -u kubelet --no-pager | tail -50
-
-systemctl status bootkube -l
-systemctl status kubelet -l
-
-# Check if the certificate is still valid
-[[ $(jq -r '.. | objects | select(.Filename? == "tls/root-ca.crt") | .Data' .openshift_install_state.json  | base64 -d | openssl x509 -noout -startdate | cut -d= -f2 | xargs -I{} date -d {} +%s) -le $(date -d "24 hours" +%s) ]] && echo OK || echo NOK
+go build -ldflags '-X main.version=v0.1.0' -o bin/okub ./cmd/okub
 ```
 
-After first reboot, fs should be setup:
+## Planned CLI
 
-```bash
-lsblk
+The target command surface is:
+
+```text
+okub init
+okub config validate
+okub config render
+okub preflight run
+okub images sync
+okub artifacts build --type iso
+okub artifacts build --type pxe
+okub artifacts serve
+okub install monitor
 ```
 
-Once install is finished
+Commands are implemented incrementally. Check `okub --help` rather than
+assuming a planned command is available.
 
-```bash
-oc whoami --show-console
-```
+## Documentation
 
-## TL;DR
+- [Repository contract](docs/00-repo-contract.md) — repository rules and docs map
+- [General architecture](docs/architectures/00-general.md)
+- [Bare-metal installation path](docs/architectures/baremetal/01-installation-path.md)
+- [Baseline specification](docs/specs/baseline.md)
+- [Delivery plan](docs/plan/summary.md)
+- [Architectural decisions](docs/decisions/)
 
-1. Diverse installation methods
+Target behavior belongs in `docs/specs/`; implementation status belongs in
+`docs/plan/`; operator procedures will be added only after their workflows are
+implemented and tested.
 
-We should normally count one extra bootstrap node, but with **Single-node installer** and **Agent-based Installer** bootstraping is handled by one master node. Since this project focus on baremetal installation. So there is a benefice to not use one baremetal for bootstraping which then need to be erase and reuse as a worker but added manually.   
+## Security
 
-The **Single-node installer** will have an ignition file named `bootstrap-in-place-for-live-iso.ign`. This install method could seems outdated and the **Agent-based Installer** a better approach. But there are still some advantage left to use it, the install is completed as *bootstrap-in-place* and require only 4 vcpu instead of 8 vcpu for **Agent-based Installer**. In case of resources scarcity like running locally on laptop, it makes sense to keep this option available.    
+Never commit pull secrets, private keys, installer state, generated cluster
+artifacts, cache content, or lab state. Okub configuration references credential
+files; reports and logs must redact their values.
 
-The **Agent-based Installer** will require an extra `agent-config.yaml` to set up the *rendezvousIP*. In the case of DHCP, this will be the control-plane IP. In an environment without a DHCP server, you can define IP addresses statically. This method seems to work for OKD even though it is not present in the documentation.
+## License
 
-2. plateform options
-
-**Agent-based Installer** support only those 3 plateforms options below:
-
-- *none*, the only possible option for **single-node installer** but works also on all raw install (like for a baremetal without BMC).
-
-   Requirements for *plateform: none{}*:
-
-      - `networkType: OVNKubernetes`
-
-      - DNS for `*.api.<domain>` and `apps.<domain>` pointing to the Loadbalancer.
-
-      - DNS and reverse DNS (PTR) for all masters and workers is required
-
-      - DHCP services to provide IP addresses to nodes during installation.
-
-      - Loadbalancer for 6443 and 22623 if not standalone install ( since `apiVIPs` and `ingressVIPs` are not defined in *none* block )
-
-- *baremetal*, for hardware with BMC or for configuring dual stacks network.
-
-   Requirements for *plateform: baremetal{}*:
-
-      - if `apiVIPs` and `ingressVIPs` are defined in the config, no need for loadbalancing
-
-      - if static IP defined then no DHCP
-
-      - if Outcome iso - no PXE boot server
-
-      - only DNS for `*.api.<domain>` and `apps.<domain>` is required
-
-- *vsphere*, does not concern us since this project focus mainly on baremetal.
-
-4. Diverse "Helpers" are present as ansible roles but the best would be to use pfsense vm or router:
-
-- DNS = Bind server.
-
-- DHCP = DHCP server.
-
-- PXE server = TFTP server.
-
-- Loadbalancer = HAproxy server.
-
-5. Diverse Installer Outcome
-
-- an bootable iso to burn on USB stick
-
-- pxe boot to push on *helper server* or in the KVM embended TFTP server.
-
-## References
-
-* Baremetal
-
-https://github.com/ryanhay/ocp4-metal-install/tree/master
-
-* Agent-based
-
-https://www.redhat.com/en/blog/meet-the-new-agent-based-openshift-installer-1
-
-https://kapilrajyaguru.medium.com/agent-based-red-hat-openshift-cluster-install-ee33d3b9fe0e
-
-https://docs.openshift.com/container-platform/4.14/installing/installing_with_agent_based_installer/preparing-to-install-with-agent-based-installer.html#static-networking
-
-https://github.com/cgruver/kamarotos/blob/main/agent-install.md
-
-* KVM
-
-https://github.com/lgchiaretto/ocp4_setup_upi_kvm_ansible/tree/master
-
-https://fajlinuxblog.medium.com/openshift-running-as-single-node-with-libvirt-kvm-cb615d2c43e6
-
-* Vsphere
-
-https://guifreelife.com/blog/2022/05/13/OpenShift-Virtualization-on-vSphere/
-
-* Airgap
-
-https://www.redhat.com/en/blog/red-hat-openshift-disconnected-installations
-
-https://two-oes.medium.com/openshift-4-in-an-air-gap-disconnected-environment-part-2-installation-1dd8bf085fdd
-
-* Terraform modules
-
-https://github.com/sawa2d2/k8s-on-kvm
-
-https://github.com/amrut-asm/homelab
-
-
-## Roadmap
-milestones:
-- To deploy sone staffs
-- To add flavors
-
-Improvment:
-- Add a option to chooce by url or by copy
-
-## Authors
-morze.baltyk@proton.me
-
-## Project status
-Still on developement
+[Apache License 2.0](LICENSE)
