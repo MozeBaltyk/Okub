@@ -69,7 +69,7 @@ internal/adapters/
   coreos/                     release metadata, downloads and cache
   dns/                        forward/reverse DNS checks
   libvirt/                    lab lifecycle integration
-  pfsense/                    future config renderer/apply adapter
+  helper/                     Fedora helper image/lifecycle adapter
   pxe/                        optional ephemeral PXE serving adapter
 internal/cli/                 Cobra commands and output presentation
 internal/tui/                 Bubble Tea presentation
@@ -224,7 +224,7 @@ system of record.
 - Existing files are never overwritten silently.
 - Infrastructure-changing actions require explicit commands and confirmation;
   `--dry-run` never performs the action.
-- Applying pfSense configuration remains separate from rendering it.
+- Applying the Fedora helper lifecycle remains separate from rendering cloud-init.
 
 ## 9. Concurrency and failure handling
 

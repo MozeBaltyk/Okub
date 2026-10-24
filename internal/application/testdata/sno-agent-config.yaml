@@ -1,0 +1,35 @@
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+    name: lab
+rendezvousIP: 192.168.101.20
+hosts:
+    - hostname: master-0
+      role: master
+      interfaces:
+        - name: eno1
+          macAddress: "52:54:00:00:00:10"
+      rootDeviceHints:
+        deviceName: /dev/vda
+      networkConfig:
+        interfaces:
+            - name: eno1
+              type: ethernet
+              state: up
+              mac-address: "52:54:00:00:00:10"
+              ipv4:
+                enabled: true
+                address:
+                    - ip: 192.168.101.20
+                      prefix-length: 24
+                dhcp: false
+        dns-resolver:
+            config:
+                server:
+                    - 192.168.101.1
+        routes:
+            config:
+                - destination: 0.0.0.0/0
+                  next-hop-address: 192.168.101.1
+                  next-hop-interface: eno1
+                  table-id: 254

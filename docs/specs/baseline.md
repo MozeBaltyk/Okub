@@ -39,7 +39,8 @@ disposable libvirt validation scenario.
 
 ### After MVP
 
-- pfSense DNS, DHCP, VIP, firewall, and PXE configuration rendering.
+- Fedora helper artifact synchronization and readiness automation beyond the
+  implemented image, cloud-init, and guarded lifecycle baseline.
 - Disconnected installation.
 - Additional CPU architectures.
 - Multi-cluster profiles and local run-history queries.
@@ -82,6 +83,7 @@ network:
   gateway: 192.168.100.1
   apiVIP: 192.168.100.10
   ingressVIP: 192.168.100.11
+  rendezvousIP: 192.168.100.20
 
 hosts:
   - name: master-0
@@ -96,8 +98,8 @@ boot:
   method: iso
 
 artifacts:
-  outputDirectory: ./build/lab
-  cacheDirectory: ~/.cache/okub
+  outputDirectory: ./.local/build/lab
+  cacheDirectory: ./.local/cache
   checksumPolicy: required
 
 credentials:
@@ -116,7 +118,7 @@ credentials:
 | `cluster.version` | yes | Release channel/version accepted by the resolver; quote YAML values |
 | `cluster.architecture` | yes | `x86_64` in MVP |
 | `cluster.topology` | yes | `sno`, `compact`, or `ha` |
-| `platform.type` | yes | `none` or `baremetal` in MVP |
+| `platform.type` | yes | `none` or `baremetal` in MVP; SNO requires `none` |
 | `network.machineCIDR` | yes | IPv4 CIDR containing host and applicable VIP addresses |
 | `network.clusterCIDR` | yes | Pod network CIDR |
 | `network.hostPrefix` | yes | Node subnet prefix within `clusterCIDR` |
@@ -125,19 +127,26 @@ credentials:
 | `network.gateway` | conditional | Required for statically addressed hosts |
 | `network.apiVIP` | conditional | Required where the selected platform/topology uses a VIP |
 | `network.ingressVIP` | conditional | Required where the selected platform/topology uses a VIP |
+| `network.rendezvousIP` | conditional | IPv4 address in `machineCIDR`; required when no master has a static address |
 | `hosts` | yes | Non-empty list satisfying topology rules |
 | `hosts[].name` | yes | Unique DNS label |
 | `hosts[].role` | yes | `master` or `worker` |
-| `hosts[].interfaces` | yes | At least one uniquely named interface |
+| `hosts[].interfaces` | yes | At least one uniquely named interface; a statically addressed host currently requires exactly one |
 | `interfaces[].macAddress` | yes | Globally unique unicast MAC address |
 | `hosts[].address` | conditional | Static address with prefix; omit when using DHCP |
-| `hosts[].installationDisk` | yes | Stable installer-visible disk path or device hint |
+| `hosts[].installationDisk` | yes | Absolute installer-visible device path under `/dev`, including stable `/dev/disk/by-*` paths |
 | `boot.method` | yes | `iso` or `pxe` |
-| `artifacts.outputDirectory` | no | Defaults to `./build/<metadata.name>` |
-| `artifacts.cacheDirectory` | no | Defaults to the user cache directory for Okub |
+| `artifacts.outputDirectory` | no | Defaults to `./.local/build/<metadata.name>` |
+| `artifacts.cacheDirectory` | no | Defaults to `./.local/cache` |
 | `artifacts.checksumPolicy` | no | Defaults to `required`; it cannot be disabled in MVP |
 | `credentials.pullSecretFile` | yes | Readable regular file; content is never copied to reports |
 | `credentials.sshPublicKeyFile` | yes | Readable OpenSSH public key file |
+| `helper` | no | Optional Fedora Cloud 44 network-services VM desired state |
+| `helper.fedoraRelease`, `vmName`, `storagePool` | with `helper` | Release is fixed to 44; domain and existing active pool are explicit |
+| `helper.wanCIDR` | no | Dedicated RFC1918 `/24`-`/29` NAT WAN; defaults to `172.31.255.0/24` and must not overlap configured or active networks |
+| `network.machineCIDR` with `helper` | yes | Managed LAN is `/24`-`/29`; helper uses first usable and host bridge reserves final usable |
+| `helper.wanMAC`, `lanMAC` | with `helper` | Distinct locally administered unicast MAC addresses |
+| `helper.libvirtURI`, `vcpu`, `memoryMiB`, `rootDiskSizeGiB` | no | URI is fixed to local `qemu:///system`; resource defaults are 2, 2048 MiB, and 20 GiB |
 
 Unknown fields are errors. Environment expansion inside YAML values is not
 performed. Leading `~/` is resolved only for artifact directories and local
@@ -148,11 +157,11 @@ expanded as local paths.
 
 Defaults are versioned and visible in rendered output:
 
-- output directory: `./build/<cluster-name>`;
-- cache directory: the operating system's user cache directory plus `okub`;
+- output directory: `./.local/build/<cluster-name>`;
+- cache directory: `./.local/cache`;
 - checksum policy: `required`;
-- rendezvous host: the lexically first master after hosts are normalized, unless
-  a future schema adds an explicit field.
+- rendezvous IP: explicit `network.rendezvousIP` when set; otherwise the address
+  of the lexically first statically addressed master after hosts are normalized.
 
 Okub does not guess networks, host IP addresses, installation disks, release
 versions, or credentials.
@@ -176,9 +185,14 @@ stable check ID, severity, configuration path, message, and optional hint.
 - `hostPrefix` is more specific than `clusterCIDR` and can accommodate the
   selected topology.
 - Static host addresses and applicable VIPs belong to `machineCIDR`.
+- An explicit rendezvous IP belongs to `machineCIDR`; it is required when no
+  master has a static address.
 - Host, VIP, DNS, and gateway addresses do not conflict where they share the
   machine network.
 - A static address requires a gateway and DNS resolver.
+- The gateway belongs to every static host's address prefix.
+- Statically addressed hosts have exactly one interface until the schema can
+  identify a primary interface.
 - `api.<cluster>.<baseDomain>` and `api-int.<cluster>.<baseDomain>` resolve to
   their expected address or load balancer.
 - `*.apps.<cluster>.<baseDomain>` resolves to the ingress target.
@@ -196,6 +210,8 @@ Release-specific installer rules take precedence over this baseline. A changed
 upstream requirement must be represented as a compatibility rule and contract
 test rather than silently accepted.
 
+SNO uses platform type `none`; the `baremetal` platform is rejected for SNO.
+
 ### 4.4 Environment checks
 
 - Output and cache parents exist or can be created and are writable.
@@ -205,8 +221,10 @@ test rather than silently accepted.
   `--offline` is active.
 - Offline mode finds every required item in the verified cache.
 - DNS answers come from the configured resolvers, not only the host resolver.
-- Required ports and VIPs are not already in conflicting use when safely
-  testable.
+- Host addresses and externally managed VIPs are not already in conflicting use
+  when safely testable. When the Fedora helper is configured, API `6443`, MCS
+  `22623`, ingress HTTP `80`, and ingress HTTPS `443` must instead be reachable
+  on their configured VIPs.
 
 Resource checks report installer-version-appropriate CPU, memory, and disk
 requirements. They must not encode one value as valid for every release.
@@ -224,14 +242,15 @@ okub artifacts build --type pxe
 okub artifacts serve
 okub lab up|test|down
 okub install monitor
+okub helper image sync
+okub helper render
+okub helper up|down [--apply]
 okub version
 ```
 
 Commands added after MVP:
 
 ```text
-okub pfsense render
-okub pfsense apply
 okub tui
 ```
 
@@ -295,9 +314,11 @@ failed check does not prevent independent checks from running.
 
 ### `images sync`
 
-Resolves the requested release, downloads missing installer/image inputs,
-verifies them, and atomically inserts them into the cache. A corrupt cache entry
-is rejected, not reused.
+Resolves the requested release, downloads and verifies its checksum-pinned HTTP
+installer, client, and release-metadata inputs, retains the immutable OCI release-image
+pullspec/digest, and atomically inserts the verified result into the cache. A
+corrupt cache entry is rejected, not reused. Offline sync does not imply a
+disconnected installation: OCI image-layer mirroring remains excluded from MVP.
 
 ### `artifacts build --type iso`
 
@@ -322,6 +343,15 @@ Runs the appropriate installer wait operation, streams redacted progress, and
 preserves the complete redacted log. It does not administer the installed
 cluster.
 
+### `helper image sync|render|up|down`
+
+Image sync verifies Fedora's signed checksum metadata and every image byte.
+Render writes secret-free NoCloud inputs. Up uses the guarded six-resource
+OpenTofu lifecycle and is read-only unless `--apply` is explicit. Down verifies
+the state and virsh UUID and only requests bounded graceful shutdown with
+`--apply`; it never destroys owned resources. PXE artifact synchronization is
+not implemented and readiness therefore fails closed.
+
 ## 7. Output contract
 
 ```text
@@ -331,6 +361,8 @@ build/<cluster>/
 ├── artifacts/agent.<architecture>.iso
 ├── artifacts/pxe/kernel
 ├── artifacts/pxe/initramfs.img
+├── artifacts/pxe/rootfs.img
+├── artifacts/pxe/agent.ipxe       # when generated by openshift-install
 ├── artifacts/pxe/manifest.json
 ├── reports/validation.json
 ├── reports/preflight.json

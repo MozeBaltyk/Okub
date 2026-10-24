@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,9 +21,11 @@ import (
 
 // ConfigurationValidator implements the read-only configuration validation workflow.
 type ConfigurationValidator struct {
-	Source         ports.ConfigurationSource
-	CacheDirectory string
-	HomeDirectory  string
+	Source                  ports.ConfigurationSource
+	CacheDirectory          string
+	OutputDirectoryRoot     string
+	HomeDirectory           string
+	OutputDirectoryOverride string
 }
 
 // ConfigurationResult contains the normalized definition and its report.
@@ -93,7 +96,14 @@ func (v ConfigurationValidator) Validate(path string) (ConfigurationResult, erro
 		}
 		return decodeFailure(definition, err), nil
 	}
-	domain.ApplyDefaults(&definition, v.CacheDirectory, v.HomeDirectory)
+	if v.OutputDirectoryOverride != "" {
+		definition.Artifacts.OutputDirectory = v.OutputDirectoryOverride
+	}
+	outputRoot := v.OutputDirectoryRoot
+	if outputRoot == "" {
+		outputRoot = filepath.Join(".", ".local", "build")
+	}
+	domain.ApplyDefaults(&definition, outputRoot, v.CacheDirectory, v.HomeDirectory)
 	report := domain.Validate(definition)
 	if schemaErr != nil {
 		if !supportedVersion {

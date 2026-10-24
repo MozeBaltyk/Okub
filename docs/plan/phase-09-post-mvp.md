@@ -1,6 +1,7 @@
 # Phase 09 — Post-MVP workstreams
 
-Status: deferred.
+Status: partial. The Fedora helper validation-lab workstream was brought forward by
+explicit user decision; other workstreams remain deferred.
 
 ## Goal
 
@@ -8,7 +9,10 @@ Track intentionally deferred capabilities without pulling them into the MVP.
 
 ## Candidate workstreams
 
-- pfSense DNS, DHCP, VIP, firewall, and PXE rendering; apply remains separate.
+- Fedora Cloud 44 verified image caching, deterministic cloud-init rendering,
+  native dnsmasq/HAProxy/nginx configuration, and guarded six-resource VM
+  lifecycle are implemented. Secure PXE artifact synchronization and disposable
+  Fedora runtime qualification remain deferred.
 - Disconnected release and mirror workflows.
 - Additional CPU architectures after integration coverage exists.
 - Bubble Tea TUI over existing application services.

@@ -39,3 +39,9 @@ venv
 /okub
 # EE / justfile local config (REGISTRY_URL, EE_IMAGE, ...)
 .env
+
+# Repository-local runtime, cache, plans, and infrastructure state.
+/.local/
+
+# Keep the maintained helper provider selection reproducible.
+!lab/fedora-helper/.terraform.lock.hcl

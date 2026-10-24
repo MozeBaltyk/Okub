@@ -76,6 +76,152 @@ func TestValidateRejectsAllZeroMAC(t *testing.T) {
 	t.Fatalf("all-zero MAC was accepted: %#v", report)
 }
 
+func TestValidateRendezvousIP(t *testing.T) {
+	tests := []struct {
+		name       string
+		rendezvous string
+		wantID     string
+	}{
+		{name: "DHCP with explicit rendezvous", rendezvous: "192.168.100.30"},
+		{name: "DHCP without rendezvous", wantID: "field.required"},
+		{name: "invalid rendezvous", rendezvous: "not-an-ip", wantID: "network.address"},
+		{name: "outside machine network", rendezvous: "192.168.101.30", wantID: "network.outsideMachineCIDR"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			definition := validDefinition()
+			definition.Hosts[0].Address = ""
+			definition.Network.RendezvousIP = test.rendezvous
+			report := Validate(definition)
+			found := false
+			for _, finding := range report.Findings {
+				if finding.Path == "network.rendezvousIP" && finding.ID == test.wantID {
+					found = true
+				}
+			}
+			if test.wantID == "" && !report.Valid {
+				t.Fatalf("report = %#v, want valid", report)
+			}
+			if test.wantID != "" && !found {
+				t.Fatalf("report = %#v, want %s", report, test.wantID)
+			}
+		})
+	}
+}
+
+func TestValidateInstallerCompatibilityRules(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*ClusterDefinition)
+		wantID string
+	}{
+		{
+			name: "SNO baremetal", wantID: "platform.sno",
+			mutate: func(c *ClusterDefinition) { c.Platform.Type = "baremetal" },
+		},
+		{
+			name: "relative installation disk", wantID: "host.installationDisk",
+			mutate: func(c *ClusterDefinition) { c.Hosts[0].InstallationDisk = "vda" },
+		},
+		{
+			name: "path outside dev", wantID: "host.installationDisk",
+			mutate: func(c *ClusterDefinition) { c.Hosts[0].InstallationDisk = "/tmp/vda" },
+		},
+		{
+			name: "device path traversal", wantID: "host.installationDisk",
+			mutate: func(c *ClusterDefinition) { c.Hosts[0].InstallationDisk = "/dev/../tmp/vda" },
+		},
+		{
+			name: "multiple static interfaces", wantID: "host.staticInterfaces",
+			mutate: func(c *ClusterDefinition) {
+				c.Hosts[0].Interfaces = append(c.Hosts[0].Interfaces, Interface{Name: "eno2", MACAddress: "52:54:00:00:00:11"})
+			},
+		},
+		{
+			name: "gateway outside host prefix", wantID: "network.gatewayOutsideHostPrefix",
+			mutate: func(c *ClusterDefinition) {
+				c.Network.MachineCIDR = "192.168.0.0/16"
+				c.Network.Gateway = "192.168.101.1"
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			definition := validDefinition()
+			test.mutate(&definition)
+			report := Validate(definition)
+			for _, finding := range report.Findings {
+				if finding.ID == test.wantID {
+					return
+				}
+			}
+			t.Fatalf("report = %#v, want finding %s", report, test.wantID)
+		})
+	}
+}
+
+func TestValidateAllowsStableInstallationDiskPath(t *testing.T) {
+	definition := validDefinition()
+	definition.Hosts[0].InstallationDisk = "/dev/disk/by-id/wwn-test"
+	if report := Validate(definition); !report.Valid {
+		t.Fatalf("stable installation disk rejected: %#v", report)
+	}
+}
+
+func TestValidateHelperAndDefaults(t *testing.T) {
+	definition := validDefinition()
+	definition.Helper = &Helper{FedoraRelease: 44, VMName: "okub-helper", StoragePool: "images", WANMAC: "02:00:00:00:00:01", LANMAC: "02:00:00:00:00:02"}
+	ApplyDefaults(&definition, ".local/build", ".local/cache", "/home/test")
+	if report := Validate(definition); !report.Valid {
+		t.Fatalf("valid helper rejected: %#v", report)
+	}
+	if definition.Helper.WANCIDR != "172.31.255.0/24" || definition.Helper.RootDiskSizeGiB != 20 {
+		t.Fatalf("defaults=%+v", definition.Helper)
+	}
+	definition.Helper.LibvirtURI = "qemu+ssh://host/system"
+	if report := Validate(definition); !hasFinding(report, "helper.libvirtURI") {
+		t.Fatalf("remote libvirt accepted: %#v", report)
+	}
+}
+
+func TestMACsNormalizeCaseAndRejectHyphens(t *testing.T) {
+	definition := validDefinition()
+	definition.Hosts[0].Interfaces[0].MACAddress = "52:54:00:AA:BB:CC"
+	definition.Helper = &Helper{FedoraRelease: 44, VMName: "okub-helper", StoragePool: "images", WANMAC: "02:00:00:AA:BB:01", LANMAC: "02:00:00:AA:BB:02"}
+	ApplyDefaults(&definition, ".local/build", ".local/cache", "/home/test")
+	if definition.Hosts[0].Interfaces[0].MACAddress != "52:54:00:aa:bb:cc" || definition.Helper.WANMAC != "02:00:00:aa:bb:01" {
+		t.Fatalf("MACs were not normalized: %+v %+v", definition.Hosts[0].Interfaces[0], definition.Helper)
+	}
+	definition.Hosts[0].Interfaces[0].MACAddress = "52-54-00-aa-bb-cc"
+	definition.Helper.WANMAC = "02-00-00-aa-bb-01"
+	report := Validate(definition)
+	if !hasFinding(report, "interface.macAddress") || !hasFinding(report, "helper.macAddress") {
+		t.Fatalf("hyphen MACs accepted: %#v", report)
+	}
+}
+
+func TestValidateHelperReservesAddressesAndWAN(t *testing.T) {
+	definition := validDefinition()
+	definition.Helper = &Helper{FedoraRelease: 44, VMName: "helper", StoragePool: "images", WANCIDR: "192.168.100.0/24", WANMAC: "02:00:00:00:00:01", LANMAC: "02:00:00:00:00:02", LibvirtURI: "qemu:///system", VCPU: 2, MemoryMiB: 2048, RootDiskSizeGiB: 20}
+	if report := Validate(definition); !hasFinding(report, "helper.wanCIDROverlap") {
+		t.Fatalf("overlap accepted: %#v", report)
+	}
+	definition.Helper.WANCIDR = "172.31.255.0/24"
+	definition.Hosts[0].Address = "192.168.100.254/24"
+	if report := Validate(definition); !hasFinding(report, "helper.lanAddressConflict") {
+		t.Fatalf("host bridge address accepted: %#v", report)
+	}
+}
+
+func hasFinding(report ValidationReport, id string) bool {
+	for _, finding := range report.Findings {
+		if finding.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
 func validDefinition() ClusterDefinition {
 	return ClusterDefinition{
 		APIVersion: "okub.io/v1alpha1", Kind: "Cluster", Metadata: Metadata{Name: "lab"},

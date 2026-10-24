@@ -55,3 +55,51 @@ func TestBaseDomainContractMatchesDomainValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestV1Alpha1AcceptsRendezvousAndRejectsRelativeInstallationDisk(t *testing.T) {
+	schema, err := V1Alpha1()
+	if err != nil {
+		t.Fatal(err)
+	}
+	example, err := os.ReadFile("../examples/sno.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal(example, &document); err != nil {
+		t.Fatal(err)
+	}
+	if err := schema.Validate(document); err != nil {
+		t.Fatalf("example with rendezvousIP is invalid: %v", err)
+	}
+	document["hosts"].([]any)[0].(map[string]any)["installationDisk"] = "vda"
+	if err := schema.Validate(document); err == nil {
+		t.Fatal("schema accepted a relative installation disk")
+	}
+}
+
+func TestV1Alpha1MACsRequireColonForm(t *testing.T) {
+	schema, err := V1Alpha1()
+	if err != nil {
+		t.Fatal(err)
+	}
+	example, err := os.ReadFile("../examples/sno.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal(example, &document); err != nil {
+		t.Fatal(err)
+	}
+	document["hosts"].([]any)[0].(map[string]any)["interfaces"].([]any)[0].(map[string]any)["macAddress"] = "52-54-00-00-00-10"
+	if err := schema.Validate(document); err == nil {
+		t.Fatal("schema accepted a hyphenated host MAC")
+	}
+	if err := yaml.Unmarshal(example, &document); err != nil {
+		t.Fatal(err)
+	}
+	document["helper"].(map[string]any)["wanMAC"] = "02-00-00-00-10-01"
+	if err := schema.Validate(document); err == nil {
+		t.Fatal("schema accepted a hyphenated helper MAC")
+	}
+}

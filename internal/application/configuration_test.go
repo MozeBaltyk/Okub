@@ -3,6 +3,7 @@ package application
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -32,7 +33,7 @@ credentials: {pullSecretFile: pull-secret.json, sshPublicKeyFile: id.pub}
 	if err != nil || !result.Report.Valid {
 		t.Fatalf("Validate() error = %v, report = %#v", err, result.Report)
 	}
-	if result.Definition.Artifacts.OutputDirectory != "./build/lab" || result.Definition.Artifacts.CacheDirectory != "/cache/okub" || result.Definition.Artifacts.ChecksumPolicy != "required" {
+	if result.Definition.Artifacts.OutputDirectory != filepath.Join(".local", "build", "lab") || result.Definition.Artifacts.CacheDirectory != "/cache/okub" || result.Definition.Artifacts.ChecksumPolicy != "required" {
 		t.Fatalf("defaults not applied: %#v", result.Definition.Artifacts)
 	}
 
@@ -48,7 +49,7 @@ kind: Cluster
 metadata: {name: lab}
 cluster: {baseDomain: example.test, version: "4.20", architecture: x86_64, topology: sno}
 platform: {type: none}
-network: {machineCIDR: 192.168.1.0/24, clusterCIDR: 10.128.0.0/14, hostPrefix: 23, serviceCIDR: 172.30.0.0/16, dnsServers: [192.168.1.1]}
+network: {machineCIDR: 192.168.1.0/24, clusterCIDR: 10.128.0.0/14, hostPrefix: 23, serviceCIDR: 172.30.0.0/16, dnsServers: [192.168.1.1], rendezvousIP: 192.168.1.20}
 hosts: [{name: master-0, role: master, interfaces: [{name: eno1, macAddress: "52:54:00:00:00:10"}], installationDisk: /dev/vda}]
 boot: {method: iso}
 credentials: {pullSecretFile: pull-secret.json, sshPublicKeyFile: id.pub}
@@ -168,7 +169,7 @@ kind: Cluster
 metadata: {name: lab}
 cluster: {baseDomain: example.test, version: "4.20", architecture: x86_64, topology: sno}
 platform: {type: none}
-network: {machineCIDR: 192.168.1.0/24, clusterCIDR: 10.128.0.0/14, hostPrefix: 23, serviceCIDR: 172.30.0.0/16, dnsServers: [192.168.1.1]}
+network: {machineCIDR: 192.168.1.0/24, clusterCIDR: 10.128.0.0/14, hostPrefix: 23, serviceCIDR: 172.30.0.0/16, dnsServers: [192.168.1.1], rendezvousIP: 192.168.1.20}
 hosts: [{name: master-0, role: master, interfaces: [{name: eno1, macAddress: "52:54:00:00:00:10"}], installationDisk: /dev/vda}]
 boot: {method: iso}
 artifacts: {outputDirectory: ~/output, cacheDirectory: ~/cache}

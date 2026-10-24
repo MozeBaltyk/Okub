@@ -1,6 +1,6 @@
 # Phase 02 — Deterministic installer inputs
 
-Status: planned.
+Status: complete.
 
 ## Goal
 
@@ -21,3 +21,12 @@ Safely produce inspectable Agent-based Installer configuration.
 - Sensitive generated files use restrictive permissions.
 
 Dependencies: Phase 01.
+
+## Delivered
+
+- Typed, deterministic Agent-based Installer configuration for the supported
+  SNO example, including normalized static networking and rendezvous IP.
+- Bounded credential-file reads and secret-free human/JSON command results.
+- Same-filesystem staging, atomic generated-directory publication, restrictive
+  file permissions, dry-run change reporting, and explicit forced replacement.
+- Golden, workflow, filesystem-failure, permission, and CLI contract tests.

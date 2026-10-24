@@ -35,7 +35,7 @@ inspectable and scriptable. A later stage consumes verified output from the
 previous stage; it does not silently repair or mutate prerequisites.
 
 Physical DNS, DHCP, routing, load balancing, firewalling, and machine firmware
-remain site-owned. Preflight observes them. Future pfSense support may render
+remain site-owned. Preflight observes them. The optional Fedora helper supplies
 configuration, but applying it remains a separate explicit action.
 
 `openshift-install` owns installer semantics and Agent asset formats. Okub owns

@@ -1,6 +1,6 @@
 # Phase 05 — Agent boot artifacts
 
-Status: planned.
+Status: automated contract implemented; real-artifact gate pending.
 
 ## Goal
 
@@ -22,3 +22,15 @@ PXE artifacts.
 - Run metadata identifies every input needed to reproduce the build.
 
 Dependencies: Phases 02, 03, and 04.
+
+## Validation status
+
+Focused tests cover archive extraction attacks, exact installer compatibility,
+ISO/PXE output contracts, checksums and metadata, redaction, cancellation,
+monitoring, CLI results, and atomic create/replace/rollback behavior without
+network access. The common Go quality gate and focused race tests pass.
+
+The phase remains incomplete until a supported environment uses the real cached
+OKD installer and pinned release image to produce a non-empty SNO Agent ISO and
+the complete PXE set. That network- and storage-intensive gate was not run as
+part of the normal automated test suite.

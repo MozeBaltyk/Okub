@@ -8,5 +8,5 @@ The original project was an Ansible collection driven by `just` + OpenTofu
 
 Okub is being refactored into a Go CLI/TUI tool; see the
 [repository contract](../docs/00-repo-contract.md).
-Anything useful here (templates, install-config/agent-config logic, pfSense
+Anything useful here (templates, install-config/agent-config logic, legacy firewall
 config) should be ported deliberately, not depended on.

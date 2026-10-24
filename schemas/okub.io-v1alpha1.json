@@ -4,85 +4,337 @@
   "title": "Okub ClusterDefinition v1alpha1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["apiVersion", "kind", "metadata", "cluster", "platform", "network", "hosts", "boot", "credentials"],
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "cluster",
+    "platform",
+    "network",
+    "hosts",
+    "boot",
+    "credentials"
+  ],
   "properties": {
-    "apiVersion": {"const": "okub.io/v1alpha1"},
-    "kind": {"const": "Cluster"},
-    "metadata": {"$ref": "#/$defs/metadata"},
-    "cluster": {"$ref": "#/$defs/cluster"},
-    "platform": {"$ref": "#/$defs/platform"},
-    "network": {"$ref": "#/$defs/network"},
-    "hosts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/host"}},
-    "boot": {"$ref": "#/$defs/boot"},
-    "artifacts": {"$ref": "#/$defs/artifacts", "default": {}},
-    "credentials": {"$ref": "#/$defs/credentials"}
-  },
-  "$defs": {
-    "dnsLabel": {"type": "string", "maxLength": 63, "pattern": "^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$"},
+    "apiVersion": {
+      "const": "okub.io/v1alpha1"
+    },
+    "kind": {
+      "const": "Cluster"
+    },
     "metadata": {
-      "type": "object", "additionalProperties": false, "required": ["name"],
-      "properties": {"name": {"$ref": "#/$defs/dnsLabel"}}
+      "$ref": "#/$defs/metadata"
     },
     "cluster": {
-      "type": "object", "additionalProperties": false,
-      "required": ["baseDomain", "version", "architecture", "topology"],
-      "properties": {
-        "baseDomain": {"type": "string", "minLength": 1, "maxLength": 253, "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$"},
-        "version": {"type": "string", "minLength": 1},
-        "architecture": {"const": "x86_64"},
-        "topology": {"enum": ["sno", "compact", "ha"]}
-      }
+      "$ref": "#/$defs/cluster"
     },
     "platform": {
-      "type": "object", "additionalProperties": false, "required": ["type"],
-      "properties": {"type": {"enum": ["none", "baremetal"]}}
+      "$ref": "#/$defs/platform"
     },
     "network": {
-      "type": "object", "additionalProperties": false,
-      "required": ["machineCIDR", "clusterCIDR", "hostPrefix", "serviceCIDR", "dnsServers"],
-      "properties": {
-        "machineCIDR": {"type": "string", "minLength": 1},
-        "clusterCIDR": {"type": "string", "minLength": 1},
-        "hostPrefix": {"type": "integer", "minimum": 1, "maximum": 32},
-        "serviceCIDR": {"type": "string", "minLength": 1},
-        "dnsServers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "gateway": {"type": "string", "minLength": 1},
-        "apiVIP": {"type": "string", "minLength": 1},
-        "ingressVIP": {"type": "string", "minLength": 1}
-      }
+      "$ref": "#/$defs/network"
     },
-    "interface": {
-      "type": "object", "additionalProperties": false, "required": ["name", "macAddress"],
-      "properties": {"name": {"type": "string", "minLength": 1}, "macAddress": {"type": "string", "minLength": 1}}
-    },
-    "host": {
-      "type": "object", "additionalProperties": false,
-      "required": ["name", "role", "interfaces", "installationDisk"],
-      "properties": {
-        "name": {"$ref": "#/$defs/dnsLabel"},
-        "role": {"enum": ["master", "worker"]},
-        "interfaces": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/interface"}},
-        "address": {"type": "string", "minLength": 1},
-        "installationDisk": {"type": "string", "minLength": 1}
+    "hosts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/host"
       }
     },
     "boot": {
-      "type": "object", "additionalProperties": false, "required": ["method"],
-      "properties": {"method": {"enum": ["iso", "pxe"]}}
+      "$ref": "#/$defs/boot"
     },
     "artifacts": {
-      "type": "object", "additionalProperties": false,
+      "$ref": "#/$defs/artifacts",
+      "default": {}
+    },
+    "credentials": {
+      "$ref": "#/$defs/credentials"
+    },
+    "helper": {
+      "$ref": "#/$defs/helper"
+    }
+  },
+  "$defs": {
+    "dnsLabel": {
+      "type": "string",
+      "maxLength": 63,
+      "pattern": "^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
       "properties": {
-        "outputDirectory": {"type": "string", "minLength": 1, "description": "Defaults to ./build/<metadata.name>."},
-        "cacheDirectory": {"type": "string", "minLength": 1, "description": "Defaults to the operating system user cache directory plus okub."},
-        "checksumPolicy": {"const": "required", "default": "required"}
+        "name": {
+          "$ref": "#/$defs/dnsLabel"
+        }
+      }
+    },
+    "cluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseDomain",
+        "version",
+        "architecture",
+        "topology"
+      ],
+      "properties": {
+        "baseDomain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 253,
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architecture": {
+          "const": "x86_64"
+        },
+        "topology": {
+          "enum": [
+            "sno",
+            "compact",
+            "ha"
+          ]
+        }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "none",
+            "baremetal"
+          ]
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "machineCIDR",
+        "clusterCIDR",
+        "hostPrefix",
+        "serviceCIDR",
+        "dnsServers"
+      ],
+      "properties": {
+        "machineCIDR": {
+          "type": "string",
+          "minLength": 1
+        },
+        "clusterCIDR": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hostPrefix": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "serviceCIDR": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dnsServers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "gateway": {
+          "type": "string",
+          "minLength": 1
+        },
+        "apiVIP": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ingressVIP": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rendezvousIP": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "macAddress"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "macAddress": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f][02468AaCcEe](?::[0-9A-Fa-f]{2}){5}$"
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "role",
+        "interfaces",
+        "installationDisk"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/dnsLabel"
+        },
+        "role": {
+          "enum": [
+            "master",
+            "worker"
+          ]
+        },
+        "interfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/interface"
+          }
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1
+        },
+        "installationDisk": {
+          "type": "string",
+          "pattern": "^/dev/.+"
+        }
+      }
+    },
+    "boot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method"
+      ],
+      "properties": {
+        "method": {
+          "enum": [
+            "iso",
+            "pxe"
+          ]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "outputDirectory": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Defaults to ./.local/build/<metadata.name>."
+        },
+        "cacheDirectory": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Defaults to ./.local/cache."
+        },
+        "checksumPolicy": {
+          "const": "required",
+          "default": "required"
+        }
       }
     },
     "credentials": {
-      "type": "object", "additionalProperties": false, "required": ["pullSecretFile", "sshPublicKeyFile"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pullSecretFile",
+        "sshPublicKeyFile"
+      ],
       "properties": {
-        "pullSecretFile": {"type": "string", "minLength": 1},
-        "sshPublicKeyFile": {"type": "string", "minLength": 1}
+        "pullSecretFile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sshPublicKeyFile": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "helper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fedoraRelease",
+        "vmName",
+        "storagePool",
+        "wanMAC",
+        "lanMAC"
+      ],
+      "properties": {
+        "fedoraRelease": {
+          "const": 44
+        },
+        "vmName": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,58}$"
+        },
+        "storagePool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wanCIDR": {
+          "type": "string",
+          "default": "172.31.255.0/24"
+        },
+        "wanMAC": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f][26AaEe](?::[0-9A-Fa-f]{2}){5}$"
+        },
+        "lanMAC": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f][26AaEe](?::[0-9A-Fa-f]{2}){5}$"
+        },
+        "libvirtURI": {
+          "const": "qemu:///system",
+          "default": "qemu:///system"
+        },
+        "vcpu": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64,
+          "default": 2
+        },
+        "memoryMiB": {
+          "type": "integer",
+          "minimum": 1024,
+          "default": 2048
+        },
+        "rootDiskSizeGiB": {
+          "type": "integer",
+          "minimum": 8,
+          "default": 20
+        }
       }
     }
   }

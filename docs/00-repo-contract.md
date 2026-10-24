@@ -43,7 +43,7 @@ External tools are adapters, not sources of business logic:
 - `openshift-install` is authoritative for Agent ISO and PXE generation;
 - OpenTofu/libvirt provides disposable validation infrastructure only;
 - Pixiecore may provide optional ephemeral PXE discovery/TFTP;
-- pfSense support starts with deterministic configuration rendering; applying
+- Fedora helper support separates verified image sync, deterministic cloud-init rendering, and explicit lifecycle apply; applying
   changes is always separate and explicit.
 
 Tool and image versions are pinned or resolved reproducibly, checksums/digests
@@ -79,6 +79,7 @@ internal/ports/               narrow interfaces required by workflows
 internal/adapters/            filesystem, installer, DNS, HTTP, PXE, lab
 internal/cli/                 Cobra commands and presentation
 internal/tui/                 optional Bubble Tea presentation
+docs/                         repository contract and categorized documentation
 schemas/                      versioned Okub configuration schemas
 templates/                    templates only where typed output is unsuitable
 examples/                     complete supported cluster definitions
@@ -161,8 +162,21 @@ explicit user approval.
 
 ## Documentation map
 
-`docs/` holds directories, not topical files. This repository contract is the
-only content file at the root of `docs/`.
+Keep this basic structure, including empty category directories:
+
+```text
+docs/
+├── 00-repo-contract.md
+├── architectures/
+├── decisions/
+├── plan/
+├── procedures/
+├── specs/
+└── troubleshooting/
+```
+
+`00-repo-contract.md` is mandatory and is the only content file allowed directly
+under `docs/`. Never move it into a category directory.
 
 | Path | Holds |
 |---|---|
@@ -177,13 +191,16 @@ only content file at the root of `docs/`.
 Documentation rules:
 
 - One topic, one authoritative place. Link instead of copying a contract.
+- Use the exact category names above, including `plan/` rather than `plans/`.
 - A cross-file workstream gets one spec containing scope, interfaces,
   lifecycle, constraints, and acceptance criteria.
-- Specs describe the target; plans track implementation; architectures explain
-  the build; procedures tell operators how; ADRs preserve why.
+- Specs describe target behavior; architectures explain implementation design;
+  plans track work; procedures tell operators how; ADRs preserve lasting
+  rationale; troubleshooting documents symptoms, causes, and fixes.
 - User-facing usage, current status, roadmap, and limits stay in `README.md`.
 - Use stable `ADR-NN-concise-subject.md` names for decisions.
-- No placeholder files. Create a document only when it has content.
+- Empty documentation directories contain `.gitkeep`; otherwise create a
+  document only when it has content.
 - Temporary analysis may exist while work is active, but must be dispatched to
   its lasting location or deleted before the workstream closes.
 
