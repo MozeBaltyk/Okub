@@ -1,0 +1,15 @@
+apiVersion: okub.io/v1alpha1
+kind: Cluster
+metadata: {name: ha-network-invalid}
+cluster: {baseDomain: example.test, version: "4.20", architecture: x86_64, topology: ha}
+platform: {type: baremetal}
+network:
+  {machineCIDR: 192.168.104.0/24, clusterCIDR: 10.128.0.0/14, hostPrefix: 23, serviceCIDR: 172.30.0.0/16, dnsServers: [], gateway: 192.168.104.1}
+hosts:
+  - {name: master-0, role: master, interfaces: [{name: eno1, macAddress: "52:54:00:00:04:20"}], address: 192.168.104.20/24, installationDisk: /dev/sda}
+  - {name: master-1, role: master, interfaces: [{name: eno1, macAddress: "52:54:00:00:04:21"}], address: 192.168.104.21/24, installationDisk: /dev/sdb}
+  - {name: master-2, role: master, interfaces: [{name: eno1, macAddress: "52:54:00:00:04:22"}], address: 192.168.104.22/24, installationDisk: /dev/sdc}
+  - {name: worker-0, role: worker, interfaces: [{name: eno1, macAddress: "52:54:00:00:04:30"}], address: 192.168.104.30/24, installationDisk: /dev/sdd}
+  - {name: worker-1, role: worker, interfaces: [{name: eno1, macAddress: "52:54:00:00:04:31"}], address: 192.168.104.31/24, installationDisk: /dev/sde}
+boot: {method: iso}
+credentials: {pullSecretFile: ~/.config/okub/pull-secret.json, sshPublicKeyFile: ~/.ssh/id_ed25519.pub}

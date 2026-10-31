@@ -240,8 +240,29 @@
             "iso",
             "pxe"
           ]
+        },
+        "artifactsBaseURL": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "const": "pxe"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "artifactsBaseURL"
+            ]
+          }
+        }
+      ]
     },
     "artifacts": {
       "type": "object",

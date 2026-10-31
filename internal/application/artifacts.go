@@ -71,6 +71,9 @@ func (b ArtifactBuilder) Build(ctx context.Context, configPath, outputOverride, 
 		return ArtifactBuildResult{}, validated.Report, err
 	}
 	c := validated.Definition
+	if artifactType == "pxe" && c.Boot.Method != "pxe" {
+		return ArtifactBuildResult{}, validated.Report, &CompatibilityError{Message: "PXE artifact build requires boot.method pxe and boot.artifactsBaseURL"}
+	}
 	release, found, err := b.Cache.Lookup(c.Artifacts.CacheDirectory, c.Cluster.Version, c.Cluster.Architecture)
 	if err != nil || !found {
 		if err == nil {

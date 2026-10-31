@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -79,6 +81,15 @@ func Validate(c ClusterDefinition) ValidationReport {
 		add("platform.sno", "platform.type", "SNO requires platform type none")
 	}
 	allowed(c.Boot.Method, "boot.method", "iso", "pxe")
+	if c.Boot.Method == "pxe" {
+		if c.Boot.ArtifactsBaseURL == "" {
+			add("field.required", "boot.artifactsBaseURL", "PXE boot requires an artifact base URL")
+		} else if parsed, err := url.Parse(c.Boot.ArtifactsBaseURL); err != nil || parsed.Scheme != "http" || parsed.Hostname() == "" || !validURLPort(parsed.Port()) || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.Path != "/artifacts/pxe" {
+			add("boot.artifactsBaseURL", "boot.artifactsBaseURL", "must be an HTTP URL ending exactly in /artifacts/pxe without credentials, query, or fragment")
+		}
+	} else if c.Boot.ArtifactsBaseURL != "" {
+		add("boot.artifactsBaseURL", "boot.artifactsBaseURL", "artifact base URL is supported only for PXE boot")
+	}
 	if c.Artifacts.ChecksumPolicy != "required" {
 		add("artifacts.checksumPolicy", "artifacts.checksumPolicy", "checksum policy must be required")
 	}
@@ -260,6 +271,14 @@ func Validate(c ClusterDefinition) ValidationReport {
 		return findings[i].Message < findings[j].Message
 	})
 	return ValidationReport{Valid: len(findings) == 0, Findings: findings}
+}
+
+func validURLPort(value string) bool {
+	if value == "" {
+		return true
+	}
+	port, err := strconv.Atoi(value)
+	return err == nil && port > 0 && port <= 65535
 }
 
 func validateHelper(h Helper, c ClusterDefinition, add func(string, string, string)) {

@@ -62,7 +62,8 @@ type Interface struct {
 }
 
 type Boot struct {
-	Method string `yaml:"method" json:"method"`
+	Method           string `yaml:"method" json:"method"`
+	ArtifactsBaseURL string `yaml:"artifactsBaseURL,omitempty" json:"artifactsBaseURL,omitempty"`
 }
 
 type Artifacts struct {

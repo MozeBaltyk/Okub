@@ -50,7 +50,7 @@ func TestRenderHelperIsDeterministicAndSecretFree(t *testing.T) {
 
 func TestHelperSetupIsOneFailFastScriptAndPXERemainsDisabled(t *testing.T) {
 	repo := t.TempDir()
-	config := strings.Replace(helperTestConfig(), "method: iso", "method: pxe", 1)
+	config := strings.Replace(helperTestConfig(), "boot: {method: iso}", "boot: {method: pxe, artifactsBaseURL: http://192.168.1.10:8080/artifacts/pxe}", 1)
 	result, report, err := RenderHelper("ignored", repo, ConfigurationValidator{Source: sourceStub{data: []byte(config)}, CacheDirectory: repo})
 	if err != nil || !report.Valid {
 		t.Fatalf("render error=%v report=%#v", err, report)

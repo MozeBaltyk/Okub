@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mozebaltyk/Okub/internal/adapters/artifacthttp"
+	"github.com/mozebaltyk/Okub/internal/adapters/artifactpxe"
 	cacheadapter "github.com/mozebaltyk/Okub/internal/adapters/cache"
 	"github.com/mozebaltyk/Okub/internal/adapters/coreos"
 	dnsadapter "github.com/mozebaltyk/Okub/internal/adapters/dns"
@@ -22,6 +24,7 @@ import (
 	"github.com/mozebaltyk/Okub/internal/adapters/openshift"
 	"github.com/mozebaltyk/Okub/internal/application"
 	"github.com/mozebaltyk/Okub/internal/domain"
+	"github.com/mozebaltyk/Okub/internal/ports"
 	"github.com/spf13/cobra"
 )
 
@@ -75,6 +78,10 @@ func Execute(args []string, version string, stdout, stderr io.Writer) int {
 				Extractor: openshift.Extractor{}, Installer: openshift.Runner{}, Store: filesystem.ArtifactStore{}, OkubVersion: version,
 			}
 		},
+		serve: func(validator application.ConfigurationValidator) application.ArtifactServer {
+			httpTransport := artifacthttp.Server{}
+			return application.ArtifactServer{Validator: validator, Source: filesystem.ArtifactSetSource{}, Network: environment.Local{}, Transport: httpTransport, PXE: artifactpxe.Server{HTTP: httpTransport}}
+		},
 		monitor: func(validator application.ConfigurationValidator) application.InstallMonitor {
 			return application.InstallMonitor{
 				Validator: validator, Credentials: filesystem.ConfigurationSource{}, Cache: cache,
@@ -112,12 +119,14 @@ func executeCommand(cmd *cobra.Command, ctx context.Context, stderr io.Writer) i
 type preflightFactory func(application.ConfigurationValidator) application.Preflight
 type imageSyncFactory func(application.ConfigurationValidator) application.ImageSync
 type artifactBuilderFactory func(application.ConfigurationValidator) application.ArtifactBuilder
+type artifactServerFactory func(application.ConfigurationValidator) application.ArtifactServer
 type monitorFactory func(application.ConfigurationValidator) application.InstallMonitor
 
 type commandFactories struct {
 	preflight preflightFactory
 	images    imageSyncFactory
 	artifacts artifactBuilderFactory
+	serve     artifactServerFactory
 	monitor   monitorFactory
 	helper    func() helperadapter.Manager
 }
@@ -319,6 +328,72 @@ func newRootCommand(version string, factories commandFactories) *cobra.Command {
 	build.Flags().BoolVar(&artifactForce, "force", false, "replace an existing completed output")
 	_ = build.MarkFlagRequired("type")
 	artifacts.AddCommand(build)
+	var serveMode, serveManifest, serveBind, serveAdvertise string
+	var servePort int
+	var serveDHCPPort, serveTFTPPort, servePXEPort, servePixiecoreHTTPPort int
+	serve := &cobra.Command{
+		Use:   "serve",
+		Short: "Serve a verified artifact set over HTTP or PXE",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if serveMode != "http" && serveMode != "pxe" {
+				return &commandError{code: exitInvalidUsage, err: errors.New("serving mode must be http or pxe")}
+			}
+			validator, err := configurationValidator()
+			if err != nil {
+				return err
+			}
+			ready := false
+			request := application.ArtifactServeRequest{
+				ConfigPath: configPath, OutputDirectoryOverride: outputPath, ManifestPath: serveManifest,
+				Mode: serveMode, BindAddress: serveBind, AdvertisedAddress: serveAdvertise, Port: servePort,
+				PXEPorts: ports.PXEPorts{DHCP: serveDHCPPort, TFTP: serveTFTPPort, PXE: servePXEPort, HTTP: servePixiecoreHTTPPort},
+				Ready: func(result application.ArtifactServeResult) error {
+					ready = true
+					if jsonOutput {
+						return nil
+					}
+					_, err := fmt.Fprintf(cmd.OutOrStdout(), "serving %d verified artifacts at %s\n", len(result.Artifacts), result.Endpoint)
+					return err
+				},
+			}
+			result, report, err := factories.serve(validator).Serve(cmd.Context(), request)
+			if !report.Valid && len(report.Findings) != 0 {
+				if writeErr := writeReport(cmd.OutOrStdout(), report, jsonOutput); writeErr != nil {
+					return &commandError{code: exitFilesystem, err: writeErr}
+				}
+				return &commandError{code: validationExitCode(report), err: errors.New("configuration is invalid"), quiet: true}
+			}
+			if ready {
+				if jsonOutput {
+					if writeErr := json.NewEncoder(cmd.OutOrStdout()).Encode(result); writeErr != nil {
+						return &commandError{code: exitFilesystem, err: writeErr}
+					}
+				} else if errors.Is(err, context.Canceled) {
+					if _, writeErr := fmt.Fprintln(cmd.OutOrStdout(), "artifact server stopped"); writeErr != nil {
+						return &commandError{code: exitFilesystem, err: writeErr}
+					}
+				}
+			}
+			if err != nil {
+				return artifactServeCommandError(err)
+			}
+			return nil
+		},
+	}
+	serve.Flags().StringVar(&serveMode, "mode", "", "serving mode: http or pxe")
+	serve.Flags().StringVar(&serveManifest, "manifest", "", "path to the published run.json")
+	serve.Flags().StringVar(&serveBind, "bind", "", "IP address on which to listen")
+	serve.Flags().StringVar(&serveAdvertise, "advertise", "", "host-reachable IP address to advertise")
+	serve.Flags().IntVar(&servePort, "port", 0, "HTTP port")
+	serve.Flags().IntVar(&serveDHCPPort, "dhcp-port", 67, "PXE ProxyDHCP port")
+	serve.Flags().IntVar(&serveTFTPPort, "tftp-port", 69, "PXE TFTP port")
+	serve.Flags().IntVar(&servePXEPort, "pxe-port", 4011, "PXE boot-service port")
+	serve.Flags().IntVar(&servePixiecoreHTTPPort, "pixiecore-http-port", 8081, "PXE bootloader HTTP port")
+	for _, flag := range []string{"mode", "manifest", "bind", "advertise", "port"} {
+		_ = serve.MarkFlagRequired(flag)
+	}
+	artifacts.AddCommand(serve)
 	root.AddCommand(artifacts)
 
 	var monitorForce bool
@@ -429,7 +504,9 @@ func newRootCommand(version string, factories commandFactories) *cobra.Command {
 				return &commandError{code: exitFilesystem, err: err}
 			}
 			if !validated.Report.Valid {
-				_ = writeReport(cmd.OutOrStdout(), validated.Report, jsonOutput)
+				if err := writeReport(cmd.OutOrStdout(), validated.Report, jsonOutput); err != nil {
+					return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+				}
 				return &commandError{code: exitValidation, err: errors.New("configuration is invalid"), quiet: true}
 			}
 			if validated.Definition.Helper == nil {
@@ -448,15 +525,22 @@ func newRootCommand(version string, factories commandFactories) *cobra.Command {
 				return &commandError{code: exitExternal, err: err}
 			}
 			if jsonOutput {
-				return json.NewEncoder(cmd.OutOrStdout()).Encode(result)
+				if err := json.NewEncoder(cmd.OutOrStdout()).Encode(result); err != nil {
+					return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+				}
+				return nil
 			}
 			_, err = fmt.Fprintln(cmd.OutOrStdout(), result.Message)
-			return err
+			if err != nil {
+				return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+			}
+			return nil
 		}}
 		lifecycle.Flags().BoolVar(&helperApply, "apply", false, "authorize the inspected safe operation (plan/read-only by default)")
 		helper.AddCommand(lifecycle)
 	}
 	root.AddCommand(helper)
+
 
 	return root
 }
@@ -597,6 +681,24 @@ func artifactCommandError(err error) error {
 	var compatibility *application.CompatibilityError
 	if errors.As(err, &installer) || errors.As(err, &compatibility) {
 		return &commandError{code: exitExternal, err: err}
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return &commandError{code: exitExternal, err: err}
+	}
+	return &commandError{code: exitFilesystem, err: err}
+}
+
+func artifactServeCommandError(err error) error {
+	var network *application.ArtifactServingNetworkError
+	var compatibility *application.CompatibilityError
+	if errors.As(err, &network) {
+		return &commandError{code: exitNetwork, err: err}
+	}
+	if errors.As(err, &compatibility) {
+		return &commandError{code: exitInvalidUsage, err: err}
+	}
+	if errors.Is(err, context.Canceled) {
+		return err
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
 		return &commandError{code: exitExternal, err: err}

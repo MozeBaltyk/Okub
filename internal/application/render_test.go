@@ -107,6 +107,30 @@ func TestRenderDHCPUsesExplicitRendezvousIP(t *testing.T) {
 	}
 }
 
+func TestRenderPXEIncludesAuthoritativeArtifactBaseURL(t *testing.T) {
+	definition := domain.ClusterDefinition{
+		Cluster: domain.Cluster{Architecture: "x86_64"},
+		Boot:    domain.Boot{Method: "pxe", ArtifactsBaseURL: "http://192.168.100.10:8080/artifacts/pxe"},
+		Hosts: []domain.Host{{
+			Name: "master-0", Role: "master", Address: "192.168.100.20/24", InstallationDisk: "/dev/vda",
+			Interfaces: []domain.Interface{{Name: "eno1", MACAddress: "52:54:00:00:00:20"}},
+		}},
+	}
+	files, err := renderInstallerFiles(definition, "{}", "ssh-key")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range files {
+		if file.Name == "agent-config.yaml" {
+			if !strings.Contains(string(file.Content), "bootArtifactsBaseURL: http://192.168.100.10:8080/artifacts/pxe") {
+				t.Fatalf("agent-config is missing PXE base URL:\n%s", file.Content)
+			}
+			return
+		}
+	}
+	t.Fatal("agent-config.yaml was not rendered")
+}
+
 func TestRenderSelectsLexicallyFirstStaticMasterForRendezvous(t *testing.T) {
 	definition := domain.ClusterDefinition{
 		Cluster: domain.Cluster{Architecture: "x86_64"},
@@ -158,6 +182,76 @@ func TestRenderInstallerFilesMatchesSNOGolden(t *testing.T) {
 	if _, _, err := workflow.Render("ignored", "", false, false); err != nil || string(previous) != string(publisher.files[0].Content) {
 		t.Fatalf("repeated render is not deterministic: %v", err)
 	}
+}
+
+func TestRenderCompactAndHAContracts(t *testing.T) {
+	tests := []struct {
+		name, platform, workers, extra string
+		hosts                          []string
+	}{
+		{name: "compact", platform: "    none: {}", workers: "replicas: 0", hosts: []string{"master-0", "master-1", "master-2"}},
+		{name: "ha", platform: "    baremetal:", workers: "replicas: 2", extra: "bootArtifactsBaseURL: http://192.168.103.5:8080/artifacts/pxe", hosts: []string{"master-0", "master-1", "master-2", "worker-0", "worker-1"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			config, err := os.ReadFile("../../examples/" + test.name + ".yaml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			publisher := &publisherStub{}
+			workflow := InstallerInputRenderer{
+				Validator: ConfigurationValidator{Source: sourceStub{data: config}, CacheDirectory: "/cache", HomeDirectory: "/home/tester"},
+				Credentials: credentialStub{values: map[string][]byte{
+					"/home/tester/.config/okub/pull-secret.json": []byte(`{"auths":{}}`),
+					"/home/tester/.ssh/id_ed25519.pub":           []byte("ssh-ed25519 AAAATEST"),
+				}},
+				Publisher: publisher,
+			}
+			if _, report, err := workflow.Render("ignored", "", false, true); err != nil || !report.Valid {
+				t.Fatalf("Render() report = %#v, error = %v", report, err)
+			}
+			files := map[string]string{}
+			for _, file := range publisher.files {
+				files[file.Name] = string(file.Content)
+			}
+			install, agent := files["install-config.yaml"], files["agent-config.yaml"]
+			for _, required := range []string{"replicas: 3", test.workers, test.platform} {
+				if !strings.Contains(install, required) {
+					t.Errorf("install-config missing %q:\n%s", required, install)
+				}
+			}
+			if test.name == "ha" && (!strings.Contains(install, "192.168.103.10") || !strings.Contains(install, "192.168.103.11")) {
+				t.Errorf("baremetal VIPs missing:\n%s", install)
+			}
+			if test.extra != "" && !strings.Contains(agent, test.extra) {
+				t.Errorf("agent-config missing %q:\n%s", test.extra, agent)
+			}
+			position := -1
+			for _, host := range test.hosts {
+				next := strings.Index(agent, "hostname: "+host)
+				if next <= position {
+					t.Fatalf("hosts are not deterministically ordered: %v\n%s", test.hosts, agent)
+				}
+				position = next
+			}
+			first := append([]ports.GeneratedFile(nil), publisher.files...)
+			if _, _, err := workflow.Render("ignored", "", false, true); err != nil || !generatedFilesEqual(first, publisher.files) {
+				t.Fatalf("repeated render changed output: %v", err)
+			}
+		})
+	}
+}
+
+func generatedFilesEqual(a, b []ports.GeneratedFile) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].Name != b[i].Name || !bytes.Equal(a[i].Content, b[i].Content) {
+			return false
+		}
+	}
+	return true
 }
 
 func TestRenderCredentialErrorDoesNotReadSecondCredential(t *testing.T) {

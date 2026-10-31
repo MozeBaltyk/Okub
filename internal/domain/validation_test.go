@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -9,6 +10,65 @@ func TestValidateValidSNO(t *testing.T) {
 	report := Validate(validDefinition())
 	if !report.Valid || len(report.Findings) != 0 {
 		t.Fatalf("report = %#v, want valid", report)
+	}
+}
+
+func TestValidateCompactAndHAHostCounts(t *testing.T) {
+	tests := []struct {
+		name     string
+		topology string
+		workers  int
+	}{
+		{"compact without workers", "compact", 0},
+		{"compact with workers", "compact", 2},
+		{"HA minimum workers", "ha", 2},
+		{"HA additional workers", "ha", 3},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			definition := validDefinition()
+			definition.Cluster.Topology = test.topology
+			definition.Hosts = nil
+			for i := 0; i < 3+test.workers; i++ {
+				role, roleIndex := "master", i
+				if i >= 3 {
+					role, roleIndex = "worker", i-3
+				}
+				definition.Hosts = append(definition.Hosts, Host{
+					Name: fmt.Sprintf("%s-%d", role, roleIndex), Role: role,
+					Address: fmt.Sprintf("192.168.100.%d/24", 20+i), InstallationDisk: fmt.Sprintf("/dev/sd%c", 'a'+i),
+					Interfaces: []Interface{{Name: "eno1", MACAddress: fmt.Sprintf("52:54:00:00:10:%02x", 20+i)}},
+				})
+			}
+			if report := Validate(definition); !report.Valid {
+				t.Fatalf("report = %#v, want valid", report)
+			}
+		})
+	}
+}
+
+func TestValidatePXEArtifactBaseURL(t *testing.T) {
+	for _, test := range []struct {
+		name, value string
+		valid       bool
+	}{
+		{name: "valid", value: "http://192.168.100.10:8080/artifacts/pxe", valid: true},
+		{name: "missing"},
+		{name: "https", value: "https://192.168.100.10/artifacts/pxe"},
+		{name: "credentials", value: "http://user:pass@192.168.100.10/artifacts/pxe"},
+		{name: "missing host", value: "http://:8080/artifacts/pxe"},
+		{name: "zero port", value: "http://192.168.100.10:0/artifacts/pxe"},
+		{name: "large port", value: "http://192.168.100.10:65536/artifacts/pxe"},
+		{name: "wrong path", value: "http://192.168.100.10/boot"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			definition := validDefinition()
+			definition.Boot = Boot{Method: "pxe", ArtifactsBaseURL: test.value}
+			report := Validate(definition)
+			if report.Valid != test.valid {
+				t.Fatalf("report=%#v, valid=%t", report, test.valid)
+			}
+		})
 	}
 }
 

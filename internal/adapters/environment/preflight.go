@@ -21,6 +21,20 @@ type Local struct {
 	Timeout time.Duration
 }
 
+func (Local) HasLocalAddress(address netip.Addr) (bool, error) {
+	addresses, err := net.InterfaceAddrs()
+	if err != nil {
+		return false, err
+	}
+	for _, item := range addresses {
+		prefix, err := netip.ParsePrefix(item.String())
+		if err == nil && prefix.Addr().Unmap() == address.Unmap() {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (l Local) timeout() time.Duration {
 	if l.Timeout != 0 {
 		return l.Timeout

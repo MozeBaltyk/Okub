@@ -1,0 +1,62 @@
+apiVersion: okub.io/v1alpha1
+kind: Cluster
+
+metadata:
+  name: compact-lab
+
+cluster:
+  baseDomain: example.test
+  version: "4.20"
+  architecture: x86_64
+  topology: compact
+
+# Platform none keeps VIP ownership, DNS, and load balancing external.
+platform:
+  type: none
+
+network:
+  machineCIDR: 192.168.102.0/24
+  clusterCIDR: 10.128.0.0/14
+  hostPrefix: 23
+  serviceCIDR: 172.30.0.0/16
+  dnsServers:
+    - 192.168.102.1
+  gateway: 192.168.102.1
+  apiVIP: 192.168.102.10
+  ingressVIP: 192.168.102.11
+  rendezvousIP: 192.168.102.20
+
+hosts:
+  - name: master-2
+    role: master
+    interfaces:
+      - name: eno1
+        macAddress: "52:54:00:00:02:22"
+    address: 192.168.102.22/24
+    installationDisk: /dev/sdc
+  - name: master-0
+    role: master
+    interfaces:
+      - name: eno1
+        macAddress: "52:54:00:00:02:20"
+    address: 192.168.102.20/24
+    installationDisk: /dev/sda
+  - name: master-1
+    role: master
+    interfaces:
+      - name: eno1
+        macAddress: "52:54:00:00:02:21"
+    address: 192.168.102.21/24
+    installationDisk: /dev/sdb
+
+boot:
+  method: iso
+
+artifacts:
+  outputDirectory: ./.local/build/compact-lab
+  cacheDirectory: ./.local/cache
+  checksumPolicy: required
+
+credentials:
+  pullSecretFile: ~/.config/okub/pull-secret.json
+  sshPublicKeyFile: ~/.ssh/id_ed25519.pub

@@ -40,15 +40,36 @@ func TestHelp(t *testing.T) {
 }
 
 func TestConfigValidate(t *testing.T) {
-	stdout, stderr, code := execute([]string{"config", "validate", "--config", "../../examples/sno.yaml"})
-	if code != 0 || stderr != "" || stdout != "configuration is valid\n" {
-		t.Fatalf("stdout = %q, stderr = %q, code = %d", stdout, stderr, code)
-	}
+	for _, topology := range []string{"sno", "compact", "ha"} {
+		t.Run(topology, func(t *testing.T) {
+			config := "../../examples/" + topology + ".yaml"
+			stdout, stderr, code := execute([]string{"config", "validate", "--config", config})
+			if code != 0 || stderr != "" || stdout != "configuration is valid\n" {
+				t.Fatalf("stdout = %q, stderr = %q, code = %d", stdout, stderr, code)
+			}
 
-	stdout, stderr, code = execute([]string{"config", "validate", "--json", "--config", "../../examples/sno.yaml"})
-	var report domain.ValidationReport
-	if code != 0 || stderr != "" || json.Unmarshal([]byte(stdout), &report) != nil || !report.Valid || report.Findings == nil {
-		t.Fatalf("stdout = %q, stderr = %q, code = %d", stdout, stderr, code)
+			stdout, stderr, code = execute([]string{"config", "validate", "--json", "--config", config})
+			var report domain.ValidationReport
+			if code != 0 || stderr != "" || json.Unmarshal([]byte(stdout), &report) != nil || !report.Valid || report.Findings == nil {
+				t.Fatalf("stdout = %q, stderr = %q, code = %d", stdout, stderr, code)
+			}
+		})
+	}
+}
+
+func TestConfigValidateCompactAndHANegativeFixtures(t *testing.T) {
+	tests := []struct{ fixture, id string }{
+		{"compact-invalid-host-count.yaml", "topology.compact"},
+		{"ha-invalid-host-count.yaml", "topology.ha"},
+		{"ha-invalid-network.yaml", "network.staticDNS"},
+	}
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+			stdout, stderr, code := execute([]string{"config", "validate", "--json", "--config", "../../tests/fixtures/" + test.fixture})
+			if code != exitValidation || stderr != "" || !strings.Contains(stdout, `"id":"`+test.id+`"`) {
+				t.Fatalf("stdout = %q, stderr = %q, code = %d", stdout, stderr, code)
+			}
+		})
 	}
 }
 
@@ -409,6 +430,60 @@ func TestArtifactBuildCancellationExitCodes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestArtifactsServeCancellationHumanAndJSON(t *testing.T) {
+	for _, jsonOutput := range []bool{false, true} {
+		t.Run(fmt.Sprintf("json=%t", jsonOutput), func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			transport := cliServeTransport{cancel: cancel}
+			factories := commandFactories{serve: func(validator application.ConfigurationValidator) application.ArtifactServer {
+				return application.ArtifactServer{Validator: validator, Source: cliServeSource{}, Network: cliServeNetwork{}, Transport: transport}
+			}}
+			args := []string{"artifacts", "serve", "--mode", "http", "--manifest", "ignored-run.json", "--bind", "192.168.101.20", "--advertise", "192.168.101.20", "--port", "8080", "--config", "../../examples/sno.yaml"}
+			if jsonOutput {
+				args = append(args, "--json")
+			}
+			var stdout, stderr bytes.Buffer
+			cmd := newRootCommand("test-version", factories)
+			cmd.SetArgs(args)
+			cmd.SetOut(&stdout)
+			cmd.SetErr(&stderr)
+			code := executeCommand(cmd, ctx, &stderr)
+			if code != exitInterrupted || stderr.String() != "" {
+				t.Fatalf("stdout=%q stderr=%q code=%d", stdout.String(), stderr.String(), code)
+			}
+			if jsonOutput {
+				var result application.ArtifactServeResult
+				if err := json.Unmarshal(stdout.Bytes(), &result); err != nil || result.State != "stopped" || result.Endpoint != "http://192.168.101.20:8080" {
+					t.Fatalf("stdout=%q result=%#v error=%v", stdout.String(), result, err)
+				}
+			} else if stdout.String() != "serving 1 verified artifacts at http://192.168.101.20:8080\nartifact server stopped\n" {
+				t.Fatalf("stdout=%q", stdout.String())
+			}
+		})
+	}
+}
+
+type cliServeSource struct{}
+
+func (cliServeSource) LoadAndVerify(string) (ports.PublishedArtifactSet, error) {
+	return ports.PublishedArtifactSet{Artifacts: []ports.PublishedArtifact{{Artifact: domain.Artifact{Path: "artifacts/agent.x86_64.iso", Size: 3, SHA256: "sha256:" + strings.Repeat("a", 64)}}}}, nil
+}
+
+type cliServeNetwork struct{}
+
+func (cliServeNetwork) HasLocalAddress(netip.Addr) (bool, error) { return true, nil }
+
+type cliServeTransport struct{ cancel context.CancelFunc }
+
+func (t cliServeTransport) Serve(ctx context.Context, _ ports.PublishedArtifactSet, _ netip.AddrPort, ready func() error) error {
+	if err := ready(); err != nil {
+		return err
+	}
+	t.cancel()
+	<-ctx.Done()
+	return ctx.Err()
 }
 
 type cliBuildCredentials struct{}

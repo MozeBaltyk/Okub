@@ -190,7 +190,7 @@ func TestArtifactBuildISOAndPXEWithMetadataAndForce(t *testing.T) {
 				}
 			}
 			if artifactType == "pxe" {
-				want := []string{"artifacts/pxe/agent.ipxe", "artifacts/pxe/initramfs.img", "artifacts/pxe/kernel", "artifacts/pxe/manifest.json", "artifacts/pxe/rootfs.img"}
+				want := []string{"artifacts/pxe/agent.x86_64-initrd.img", "artifacts/pxe/agent.x86_64-rootfs.img", "artifacts/pxe/agent.x86_64-vmlinuz", "artifacts/pxe/agent.x86_64.ipxe", "artifacts/pxe/manifest.json"}
 				got := make([]string, len(result.Artifacts))
 				for i := range result.Artifacts {
 					got[i] = result.Artifacts[i].Path
@@ -313,7 +313,7 @@ func TestArtifactBuildPXEAllowsMissingOptionalIPXEScript(t *testing.T) {
 		t.Fatalf("result=%#v error=%v", result, err)
 	}
 	for _, artifact := range result.Artifacts {
-		if artifact.Path == "artifacts/pxe/agent.ipxe" {
+		if artifact.Path == "artifacts/pxe/agent.x86_64.ipxe" {
 			t.Fatal("optional iPXE artifact was published when absent")
 		}
 	}
@@ -464,7 +464,7 @@ func testBuilder(secret string, installer buildInstaller) ArtifactBuilder {
 		Inputs: []domain.ReleaseInput{{Name: "installer", Digest: "sha256:" + strings.Repeat("b", 64), Size: 7}, {Name: "client", Digest: "sha256:" + strings.Repeat("d", 64), Size: 6}, {Name: "release-metadata", Digest: "sha256:" + strings.Repeat("c", 64), Size: 8}},
 	}
 	return ArtifactBuilder{
-		Validator:   ConfigurationValidator{Source: sourceStub{data: []byte(preflightConfig)}, CacheDirectory: "/cache"},
+		Validator:   ConfigurationValidator{Source: sourceStub{data: []byte(strings.Replace(preflightConfig, "boot: {method: iso}", `boot: {method: pxe, artifactsBaseURL: "http://192.168.1.10:8080/artifacts/pxe"}`, 1))}, CacheDirectory: "/cache"},
 		Credentials: buildCredentials{secret: secret}, Cache: buildCache{release: release}, Extractor: buildExtractor{}, Installer: installer,
 		Store: filesystem.ArtifactStore{}, OkubVersion: "test-version",
 	}

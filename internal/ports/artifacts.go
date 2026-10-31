@@ -3,10 +3,49 @@ package ports
 import (
 	"context"
 	"io"
+	"net/netip"
 	"time"
 
 	"github.com/mozebaltyk/Okub/internal/domain"
 )
+
+type PublishedArtifact struct {
+	domain.Artifact
+	FilePath string
+}
+
+type PublishedArtifactSet struct {
+	Root      string
+	Artifacts []PublishedArtifact
+}
+
+type ArtifactSetSource interface {
+	LoadAndVerify(string) (PublishedArtifactSet, error)
+}
+
+type ArtifactTransport interface {
+	Serve(context.Context, PublishedArtifactSet, netip.AddrPort, func() error) error
+}
+
+type PXEPorts struct {
+	DHCP int
+	TFTP int
+	PXE  int
+	HTTP int
+}
+
+type PXEInfo struct {
+	PixiecoreVersion string
+	IPXESHA256       string
+}
+
+type PXETransport interface {
+	Serve(context.Context, PublishedArtifactSet, netip.AddrPort, netip.Addr, PXEPorts, []string, func(PXEInfo) error) error
+}
+
+type LocalAddressSource interface {
+	HasLocalAddress(netip.Addr) (bool, error)
+}
 
 type InstallerExtractor interface {
 	Extract(io.Reader, string) error

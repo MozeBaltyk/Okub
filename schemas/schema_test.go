@@ -2,12 +2,55 @@ package schemas
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/mozebaltyk/Okub/internal/domain"
 	"go.yaml.in/yaml/v3"
 )
+
+func TestExamplesMatchSchemaAndDomainContracts(t *testing.T) {
+	schema, err := V1Alpha1()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"sno", "compact", "ha"} {
+		t.Run(name, func(t *testing.T) {
+			data, err := os.ReadFile(filepath.Join("..", "examples", name+".yaml"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var document any
+			if err := yaml.Unmarshal(data, &document); err != nil {
+				t.Fatal(err)
+			}
+			if err := schema.Validate(document); err != nil {
+				t.Fatalf("schema rejected example: %v", err)
+			}
+			var definition domain.ClusterDefinition
+			if err := yaml.Unmarshal(data, &definition); err != nil {
+				t.Fatal(err)
+			}
+			domain.ApplyDefaults(&definition, ".local/build", ".local/cache", "/home/tester")
+			if report := domain.Validate(definition); !report.Valid {
+				t.Fatalf("domain rejected example: %#v", report.Findings)
+			}
+			if !strings.HasSuffix(definition.Credentials.PullSecretFile, "/pull-secret.json") || !strings.HasSuffix(definition.Credentials.SSHPublicKeyFile, ".pub") || strings.Contains(string(data), `"auths"`) {
+				t.Fatal("example must reference credential files without embedding credentials")
+			}
+			addresses, macs, disks := map[string]bool{}, map[string]bool{}, map[string]bool{}
+			for _, host := range definition.Hosts {
+				for value, seen := range map[string]map[string]bool{host.Address: addresses, host.InstallationDisk: disks, host.Interfaces[0].MACAddress: macs} {
+					if seen[value] {
+						t.Fatalf("duplicate host input %q", value)
+					}
+					seen[value] = true
+				}
+			}
+		})
+	}
+}
 
 func TestBaseDomainContractMatchesDomainValidation(t *testing.T) {
 	schema, err := V1Alpha1()

@@ -100,16 +100,16 @@ func (ArtifactStore) FinalizeArtifacts(stage ports.BuildStage, artifactType, arc
 			return nil, errors.New("installer boot-artifacts output is missing or unsafe")
 		}
 		files = []expected{
-			{"boot-artifacts/agent." + architecture + "-vmlinuz", "artifacts/pxe/kernel"},
-			{"boot-artifacts/agent." + architecture + "-initrd.img", "artifacts/pxe/initramfs.img"},
-			{"boot-artifacts/agent." + architecture + "-rootfs.img", "artifacts/pxe/rootfs.img"},
+			{"boot-artifacts/agent." + architecture + "-vmlinuz", "artifacts/pxe/agent." + architecture + "-vmlinuz"},
+			{"boot-artifacts/agent." + architecture + "-initrd.img", "artifacts/pxe/agent." + architecture + "-initrd.img"},
+			{"boot-artifacts/agent." + architecture + "-rootfs.img", "artifacts/pxe/agent." + architecture + "-rootfs.img"},
 		}
 		ipxe := filepath.Join(bootArtifacts, "agent."+architecture+".ipxe")
 		if info, err := os.Lstat(ipxe); err == nil {
 			if !info.Mode().IsRegular() || info.Size() == 0 {
 				return nil, errors.New("optional installer iPXE output is not a non-empty regular file")
 			}
-			files = append(files, expected{"boot-artifacts/agent." + architecture + ".ipxe", "artifacts/pxe/agent.ipxe"})
+			files = append(files, expected{"boot-artifacts/agent." + architecture + ".ipxe", "artifacts/pxe/agent." + architecture + ".ipxe"})
 		} else if !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("inspect optional installer iPXE output: %w", err)
 		}

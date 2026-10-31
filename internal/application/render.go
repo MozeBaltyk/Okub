@@ -113,11 +113,12 @@ type baremetalPlatform struct {
 }
 
 type agentConfig struct {
-	APIVersion   string            `yaml:"apiVersion"`
-	Kind         string            `yaml:"kind"`
-	Metadata     installerMetadata `yaml:"metadata"`
-	RendezvousIP string            `yaml:"rendezvousIP"`
-	Hosts        []agentHost       `yaml:"hosts"`
+	APIVersion           string            `yaml:"apiVersion"`
+	Kind                 string            `yaml:"kind"`
+	Metadata             installerMetadata `yaml:"metadata"`
+	RendezvousIP         string            `yaml:"rendezvousIP"`
+	BootArtifactsBaseURL string            `yaml:"bootArtifactsBaseURL,omitempty"`
+	Hosts                []agentHost       `yaml:"hosts"`
 }
 type agentHost struct {
 	Hostname        string           `yaml:"hostname"`
@@ -194,7 +195,7 @@ func renderInstallerFiles(c domain.ClusterDefinition, pullSecret, sshKey string)
 	}
 	hosts := append([]domain.Host(nil), c.Hosts...)
 	sort.Slice(hosts, func(i, j int) bool { return hosts[i].Name < hosts[j].Name })
-	agent := agentConfig{APIVersion: "v1beta1", Kind: "AgentConfig", Metadata: installerMetadata{Name: c.Metadata.Name}}
+	agent := agentConfig{APIVersion: "v1beta1", Kind: "AgentConfig", Metadata: installerMetadata{Name: c.Metadata.Name}, BootArtifactsBaseURL: c.Boot.ArtifactsBaseURL}
 	if c.Network.RendezvousIP != "" {
 		rendezvous, _ := netip.ParseAddr(c.Network.RendezvousIP)
 		agent.RendezvousIP = rendezvous.String()

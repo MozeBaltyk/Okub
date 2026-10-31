@@ -87,7 +87,7 @@ func (p Preflight) runEnvironment(ctx context.Context, c domain.ClusterDefinitio
 		if c.Helper != nil {
 			add("helper.dhcp", domain.CheckSkip, "helper", "DHCP readiness cannot be safely observed in offline mode")
 			if c.Boot.Method == "pxe" {
-				add("helper.pxeArtifacts", domain.CheckFail, "boot.method", "Fedora helper PXE boot is unsupported; use ISO until architecture-aware loaders and digest-verified artifact sync are implemented")
+				add("helper.pxeTransport", domain.CheckSkip, "boot.method", "built-in PXE transport is started separately and cannot be observed in preflight")
 			}
 		}
 		if cacheErr != nil || !cached {
@@ -102,7 +102,7 @@ func (p Preflight) runEnvironment(ctx context.Context, c domain.ClusterDefinitio
 	if c.Helper != nil {
 		add("helper.dhcp", domain.CheckSkip, "helper", "DHCP lease service cannot be safely observed from the host preflight")
 		if c.Boot.Method == "pxe" {
-			add("helper.pxeArtifacts", domain.CheckFail, "boot.method", "Fedora helper PXE boot is unsupported; use ISO until architecture-aware loaders and digest-verified artifact sync are implemented")
+			add("helper.pxeTransport", domain.CheckSkip, "boot.method", "built-in PXE transport is started separately and cannot be observed in preflight")
 		}
 	}
 	endpoints := []struct{ id, endpoint string }{{"connectivity.imageRegistry", "https://quay.io/v2/"}}

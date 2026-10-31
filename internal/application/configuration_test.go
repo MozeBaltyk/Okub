@@ -134,6 +134,43 @@ func TestValidateMergesSchemaAndIndependentSemanticFindings(t *testing.T) {
 	}
 }
 
+func TestValidateCompactAndHANegativeFixtures(t *testing.T) {
+	tests := []struct {
+		fixture string
+		ids     []string
+	}{
+		{"compact-invalid-host-count.yaml", []string{"topology.compact"}},
+		{"ha-invalid-host-count.yaml", []string{"topology.ha"}},
+		{"ha-invalid-network.yaml", []string{"config.schema", "field.required", "network.staticDNS"}},
+	}
+	for _, test := range tests {
+		t.Run(test.fixture, func(t *testing.T) {
+			data, err := os.ReadFile(filepath.Join("..", "..", "tests", "fixtures", test.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := (ConfigurationValidator{Source: sourceStub{data: data}, CacheDirectory: "/cache"}).Validate("ignored")
+			if err != nil || result.Report.Valid {
+				t.Fatalf("error = %v, report = %#v", err, result.Report)
+			}
+			for _, id := range test.ids {
+				if !hasValidationFinding(result.Report, id) {
+					t.Errorf("missing %s in %#v", id, result.Report.Findings)
+				}
+			}
+		})
+	}
+}
+
+func hasValidationFinding(report domain.ValidationReport, id string) bool {
+	for _, finding := range report.Findings {
+		if finding.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
 func TestValidateUnknownFieldDoesNotStopSemanticFindings(t *testing.T) {
 	data := []byte(`apiVersion: okub.io/v1alpha1
 kind: Cluster
