@@ -45,3 +45,11 @@ venv
 
 # Keep the maintained helper provider selection reproducible.
 !lab/fedora-helper/.terraform.lock.hcl
+# Keep the maintained validation harness and provider selection reproducible.
+!lab/terraform/
+!lab/terraform/libvirt/
+!lab/terraform/libvirt/**
+!lab/terraform/libvirt/.terraform.lock.hcl
+/lab/terraform/libvirt/.terraform/
+/lab/terraform/libvirt/*.tfstate*
+/lab/terraform/libvirt/.gitkeep

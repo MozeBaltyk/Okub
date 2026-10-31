@@ -21,6 +21,7 @@ import (
 	"github.com/mozebaltyk/Okub/internal/adapters/environment"
 	"github.com/mozebaltyk/Okub/internal/adapters/filesystem"
 	helperadapter "github.com/mozebaltyk/Okub/internal/adapters/helper"
+	labadapter "github.com/mozebaltyk/Okub/internal/adapters/lab"
 	"github.com/mozebaltyk/Okub/internal/adapters/openshift"
 	"github.com/mozebaltyk/Okub/internal/application"
 	"github.com/mozebaltyk/Okub/internal/domain"
@@ -129,6 +130,7 @@ type commandFactories struct {
 	serve     artifactServerFactory
 	monitor   monitorFactory
 	helper    func() helperadapter.Manager
+	lab       func() labadapter.Manager
 }
 
 func newRootCommand(version string, factories commandFactories) *cobra.Command {
@@ -541,6 +543,107 @@ func newRootCommand(version string, factories commandFactories) *cobra.Command {
 	}
 	root.AddCommand(helper)
 
+	var labRun, labManifest, labPool, labFirmware string
+	var labMemory, labVCPU, labDisk int
+	var labApply bool
+	lab := &cobra.Command{Use: "lab", Short: "Run the disposable libvirt validation harness"}
+	manager := func() labadapter.Manager {
+		if factories.lab != nil {
+			return factories.lab()
+		}
+		return labadapter.Manager{Source: filesystem.ArtifactSetSource{}}
+	}
+	for _, operation := range []string{"up", "down"} {
+		operation := operation
+		command := &cobra.Command{Use: operation, Short: "Plan or explicitly apply the owned lab " + operation + " lifecycle", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+			validator, err := configurationValidator()
+			if err != nil {
+				return err
+			}
+			validated, err := validator.Validate(configPath)
+			if err != nil {
+				return &commandError{code: exitFilesystem, err: err}
+			}
+			if !validated.Report.Valid {
+				if err := writeReport(cmd.OutOrStdout(), validated.Report, jsonOutput); err != nil {
+					return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+				}
+				return &commandError{code: exitValidation, err: errors.New("configuration is invalid"), quiet: true}
+			}
+			repo, err := repositoryRoot()
+			if err != nil {
+				return &commandError{code: exitFilesystem, err: err}
+			}
+			request := labadapter.Request{RunID: labRun, Manifest: labManifest, StoragePool: labPool, Firmware: labFirmware, MemoryMiB: labMemory, VCPU: labVCPU, DiskGiB: labDisk}
+			result, err := manager().Run(cmd.Context(), repo, validated.Definition, operation, request, labApply)
+			if err != nil {
+				return &commandError{code: exitExternal, err: err}
+			}
+			if jsonOutput {
+				if err := json.NewEncoder(cmd.OutOrStdout()).Encode(result); err != nil {
+					return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+				}
+				return nil
+			}
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), result.Message)
+			if err != nil {
+				return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+			}
+			return nil
+		}}
+		command.Flags().BoolVar(&labApply, "apply", false, "authorize the inspected safe operation (plan/read-only by default)")
+		if operation == "up" {
+			command.Flags().StringVar(&labManifest, "manifest", "", "path to the published run.json")
+			command.Flags().StringVar(&labPool, "pool", "", "existing libvirt storage pool")
+			command.Flags().StringVar(&labFirmware, "firmware", "", "absolute path to UEFI firmware")
+			command.Flags().IntVar(&labMemory, "memory-mib", 16384, "SNO VM memory in MiB")
+			command.Flags().IntVar(&labVCPU, "vcpu", 8, "SNO VM virtual CPUs")
+			command.Flags().IntVar(&labDisk, "disk-gib", 120, "SNO VM root disk size in GiB")
+		}
+		lab.AddCommand(command)
+	}
+	labTest := &cobra.Command{Use: "test", Short: "Observe the owned lab and wait through the normal installer monitor", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		repo, err := repositoryRoot()
+		if err != nil {
+			return &commandError{code: exitFilesystem, err: err}
+		}
+		diagnostics, err := manager().Diagnostics(cmd.Context(), repo, labRun)
+		if err != nil {
+			return &commandError{code: exitExternal, err: err}
+		}
+		validator, err := configurationValidator()
+		if err != nil {
+			return err
+		}
+		monitored, report, err := factories.monitor(validator).Monitor(cmd.Context(), configPath, outputPath, false)
+		if !report.Valid {
+			if err := writeReport(cmd.OutOrStdout(), report, jsonOutput); err != nil {
+				return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+			}
+			return &commandError{code: exitValidation, err: errors.New("configuration is invalid"), quiet: true}
+		}
+		if err != nil {
+			return artifactCommandError(err)
+		}
+		if jsonOutput {
+			if err := json.NewEncoder(cmd.OutOrStdout()).Encode(struct {
+				Diagnostics labadapter.Result         `json:"diagnostics"`
+				Monitor     application.MonitorResult `json:"monitor"`
+			}{diagnostics, monitored}); err != nil {
+				return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+			}
+			return nil
+		}
+		_, err = fmt.Fprintf(cmd.OutOrStdout(), "installation checkpoint reached; diagnostics: %s\n", diagnostics.DiagnosticsPath)
+		if err != nil {
+			return &commandError{code: exitFilesystem, err: fmt.Errorf("write result: %w", err)}
+		}
+		return nil
+	}}
+	lab.AddCommand(labTest)
+	lab.PersistentFlags().StringVar(&labRun, "run", "", "unique lowercase RFC 4122 version-4 run UUID")
+	_ = lab.MarkPersistentFlagRequired("run")
+	root.AddCommand(lab)
 
 	return root
 }
