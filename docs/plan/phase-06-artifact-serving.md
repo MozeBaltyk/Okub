@@ -1,6 +1,7 @@
 # Phase 06 — Ephemeral artifact serving
 
-Status: planned.
+Status: core serving contract complete; structured per-client observability,
+privileged ProxyDHCP coexistence, and real PXE boot validation remain pending.
 
 ## Goal
 
@@ -22,3 +23,19 @@ service or changing the site's network infrastructure.
 - ProxyDHCP behavior is tested before it is documented as supported.
 
 Dependencies: Phase 05.
+
+## Implemented contract coverage
+
+- `okub artifacts serve` verifies the published manifest before binding and
+  serves only its allowlisted artifacts over explicit HTTP.
+- Optional Pixiecore ProxyDHCP/TFTP accepts only configured host MAC addresses,
+  supports x86_64 UEFI, and preserves the installer-generated iPXE script and
+  architecture-specific artifact names.
+- PXE startup verifies that `boot.artifactsBaseURL` exactly matches the
+  advertised HTTP endpoint; cancellation stops all listeners without installing
+  a service or changing persistent network configuration.
+- Unit and integration contracts cover modified/incomplete sets, address and
+  endpoint validation, MAC admission, listener supervision, and shutdown.
+
+The remaining gate requires a privileged network and KVM-capable runner to
+demonstrate coexistence with a real DHCP service and boot a real SNO PXE set.

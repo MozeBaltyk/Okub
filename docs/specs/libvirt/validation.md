@@ -27,9 +27,11 @@ Inputs are a normal bare-metal cluster definition, its generated artifact
 manifest, and lab resource sizing. Lab-specific state stays under the ignored
 lab working directory, never in the cluster definition.
 
-Outputs are scenario status, redacted serial/installer logs, timestamps, and
-resource identifiers needed for teardown. They are test evidence rather than
-user deployment artifacts.
+Outputs are scenario status, redacted installer logs, timestamps, and resource
+identifiers needed for teardown. Raw serial output is not persisted because it
+may contain credential values without identifying labels; `serial.log` records
+that omission. These outputs are test evidence rather than user deployment
+artifacts.
 
 ## Lifecycle
 
@@ -47,7 +49,21 @@ not make unrelated libvirt networks or guests eligible for deletion.
 
 - A clean SNO ISO scenario reaches the documented checkpoint.
 - A clean SNO PXE scenario exercises the production serving interface and
-  reaches the same checkpoint.
+  reaches the same checkpoint. The scenario proves that the existing DHCP
+  service allocates the address, ProxyDHCP supplies only boot metadata, the
+  configured MAC is selected, and the VM requests the published iPXE program,
+  kernel, initramfs, and rootfs reference before the Agent environment starts.
+- Repeated PXE requests from the configured host remain successful and do not
+  consume or change host state.
+- Unknown MAC addresses and unsupported PXE architectures receive no boot
+  specification; a modified manifest or missing boot file prevents readiness.
+- Port conflicts fail before readiness, and failure of one required listener
+  closes the remaining listeners.
+- Interrupting the server produces bounded cleanup, after which the existing
+  DHCP service remains operational.
+- A multi-interface serving-host scenario rejects an ambiguous or unreachable
+  advertised address and succeeds when bind interface and advertised address
+  are explicit.
 - Repeated setup/teardown does not collide with another run.
 - Teardown selects resources by explicit ownership, not name prefix alone.
 - Logs and state contain no pull-secret or private-key content.

@@ -1,249 +1,228 @@
-# Okub
+# Okub — bare-metal OKD installation orchestrator
 
-Okub is a Go CLI that helps operators install **OKD on bare metal**.
-
-It guides the installation path without replacing `openshift-install`:
-
-```text
-check prerequisites
-  → validate okub.yaml
-  → render installer configuration
-  → resolve verified OKD tools and images
-  → build Agent ISO or PXE artifacts
-  → export or explicitly serve artifacts
-  → monitor installation
-```
-
+[![CI](https://github.com/mozebaltyk/Okub/actions/workflows/ci.yml/badge.svg)](https://github.com/mozebaltyk/Okub/actions/workflows/ci.yml)
 [![Releases](https://img.shields.io/github/release/mozebaltyk/Okub)](https://github.com/mozebaltyk/Okub/releases)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
-## Status
+> [!WARNING]
+> Okub is under active development. Do not use the current development build
+> for unattended production changes.
 
-Okub is under active development. Strict configuration validation,
-deterministic Agent-based Installer input rendering, and read-only bare-metal
-preflight are available. Deterministic release resolution and verified input
-caching are also available. Agent ISO/PXE generation and installation
-monitoring are implemented and covered by local contract tests; the real SNO
-artifact gate is still pending. Artifact serving remains planned in the
-[delivery plan](docs/plan/summary.md).
+Okub is a local Go CLI that helps operators install
+[OKD](https://okd.io/) on bare metal. It validates one declarative cluster
+definition, prepares verified inputs for the Agent-based Installer, builds ISO
+or PXE artifacts, and monitors installation.
 
-Do not use the current development build for unattended production changes.
-The archived Ansible implementation remains available under [`archive/`](archive/)
-for reference but is not maintained or executed by the Go application.
+Okub does not replace `openshift-install`. It makes the supported installer path
+more reproducible, inspectable, and safe to operate.
 
-## Scope
+## Features
 
-The MVP targets:
+The current implementation supports `x86_64`.
 
-- OKD on physical bare-metal hosts;
-- `x86_64` SNO, compact, and HA topologies;
-- Agent-based Installer configuration;
-- existing DHCP/static networking, DNS, VIP, and load-balancer prerequisites;
-- Agent ISO and PXE artifact generation;
-- optional ephemeral HTTP/PXE artifact serving;
-- human-readable and JSON validation reports.
+- [x] Strict, versioned YAML cluster definition
+- [x] Deterministic `install-config.yaml` and `agent-config.yaml` rendering
+- [x] Read-only DNS, network, credential, host, and tool preflight
+- [x] Verified OKD release resolution and content-addressed tool cache
+- [x] Agent ISO and PXE artifact generation through `openshift-install`
+- [x] Checksummed artifacts, redacted logs, and reproducible run metadata
+- [x] Installation monitoring through the Agent-based Installer
+- [x] Optional Fedora Cloud helper VM with explicit, guarded lifecycle actions
+- [x] Built-in ephemeral HTTP/PXE serving with optional Pixiecore
+- [x] Compact and HA schema, renderer, and CLI contracts
+- [ ] Disposable libvirt end-to-end validation of the physical boot path
+- [ ] KVM-backed compact and HA artifact/install acceptance
 
-Libvirt is used only as disposable test infrastructure to validate the same
-artifacts and network path intended for physical hosts. It is not an Okub
-deployment target.
+Artifact generation and serving are implemented and covered by local contract
+tests, and a real SNO ISO has been verified. Compact/HA definitions now validate
+and render, but their real artifact and installation gates remain pending on a
+KVM-capable supported environment. See the [delivery plan](docs/plan/summary.md)
+for exact status.
 
-Okub does not provide permanent DNS/DHCP/PXE services, reimplement
-`openshift-install`, or manage a cluster after installation.
-
-## Development
+## Usage
 
 Requirements:
 
 - the Go version declared in [`go.mod`](go.mod);
-- [`just`](https://github.com/casey/just) for repository recipes;
-- Podman or Docker only when using the optional execution environment;
-- OpenTofu/libvirt only for privileged validation-lab scenarios.
+- [`just`](https://github.com/casey/just) for development recipes;
+- network access to OKD release metadata and image registries for connected
+  builds.
 
-Build and check the CLI:
+Build the CLI:
 
-```bash
+```sh
 just compile
-just fmt
-just vet
-just test
 ./bin/okub --help
-./bin/okub version
-./bin/okub config validate --config examples/sno.yaml
-./bin/okub config validate --config examples/sno.yaml --json
-./bin/okub config render --config examples/sno.yaml --dry-run
-./bin/okub config render --config examples/sno.yaml
-./bin/okub preflight run --config examples/sno.yaml
-./bin/okub preflight run --config examples/sno.yaml --json
-./bin/okub preflight run --config examples/sno.yaml --offline
-./bin/okub images sync --config examples/sno.yaml
-./bin/okub images sync --config examples/sno.yaml --json
-./bin/okub images sync --config examples/sno.yaml --offline
-./bin/okub artifacts build --type iso --config examples/sno.yaml
-./bin/okub artifacts build --type pxe --config examples/sno.yaml
-./bin/okub install monitor --config examples/sno.yaml
-./bin/okub helper image sync --config examples/sno.yaml
-./bin/okub helper render --config examples/sno.yaml
-./bin/okub helper up --config examples/sno.yaml          # plan only
-./bin/okub helper up --apply --config examples/sno.yaml  # explicit mutation
-./bin/okub helper down --apply --config examples/sno.yaml
 ```
 
-For catalog-free testing, the SNO example can use the fake pull secret
-recommended by the OKD documentation. Okub keeps credentials out of
-`okub.yaml`, so create the referenced file with restrictive permissions:
+Okub keeps credentials out of `okub.yaml`. Create the files referenced by the
+example configuration before running the workflow. For catalog-free testing,
+the OKD-documented fake pull secret can be used:
 
-```bash
+```sh
 install -d -m 700 ~/.config/okub
 printf '%s\n' '{"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}' \
   > ~/.config/okub/pull-secret.json
 chmod 600 ~/.config/okub/pull-secret.json
 ```
 
-Use a real pull secret instead when operator catalog or authenticated registry
-access is required.
+Use a real pull secret when authenticated registry or operator catalog access
+is required.
 
-Validation is local and read-only: it applies the documented configuration
-defaults and checks structure, names, addresses, networks, uniqueness, and
-topology. It does not read credential contents, query DNS, or run environmental
-preflight checks. The default input is `./okub.yaml`.
+Run the installation preparation path:
 
-Rendering reads the referenced pull-secret and SSH public-key files and writes
-`install-config.yaml` and `agent-config.yaml` under the configured
-`<outputDirectory>/generated/`. Output defaults to
-`./.local/build/<cluster>` and cache data to `./.local/cache`; credential paths
-are unchanged. Use `--output` to override that directory and `--dry-run` to
-report `create`, `update`, or `unchanged` without writing. A
-differing generated directory requires `--force`; identical output succeeds
-without a write. Result details support `--json`, while credential contents are
-never printed. DHCP configurations must set `network.rendezvousIP`; static
-configurations may omit it and use the lexically first master's address.
+```sh
+# Validate desired state without network checks.
+./bin/okub config validate --config examples/sno.yaml
 
-Preflight queries every configured DNS resolver directly and checks API,
-API-int, apps, host, and PTR answers. With the Fedora helper configured, it requires
-reachable API `6443`, MCS `22623`, ingress HTTP `80`, and ingress HTTPS `443`
-listeners instead of treating those VIP listeners as conflicts. Other
-deployments retain address/VIP-port availability checks. Preflight also checks routes, validates credential content, output/cache access and
-compatible `openshift-install`/`oc`, probes required HTTPS endpoints, and reports
-the OKD 4.20 host resource minimums. It does not render inputs or change host,
-network, or cluster state. Offline mode makes no network probes and instead
-requires the same verified release cache produced by `images sync`. A complete
-cache also removes any PATH-tool or metadata/tool-download endpoint dependency;
-connected builds still require the immutable-image registry.
+# Inspect the generated installer inputs, then publish them.
+./bin/okub config render --config examples/sno.yaml --dry-run
+./bin/okub config render --config examples/sno.yaml
 
-Image sync selects the newest accepted matching tag from OKD's public
-`4-scos-stable` release-controller stream, then resolves that exact GitHub
-release. The release-controller detail endpoint supplies the immutable image
-digest used to replace the matching image tag with a digest pullspec. Image sync
-downloads the matching Linux installer, `oc` client, and `release.txt` only when missing, verifies their
-declared sizes and SHA-256 digests, and publishes them atomically. The release
-manifest also retains the immutable OCI image pullspec and digest.
-Blobs live at `<cache>/blobs/sha256/<digest>` and the manifest at
-`<cache>/releases/<requested-version>/<architecture>/manifest.json`. Every hit
-is re-verified; a complete hit and every offline invocation make no downloads.
-Concurrent syncs safely converge on the same content-addressed entries. The OCI
-image layers are not cached: disconnected installation remains outside MVP
-scope. The tools are securely materialized under
-`./.local/tools/<exact-release>/`. Artifact builds use the verified cached installer and pass the immutable
-release pullspec through the installer's supported release-image override. They
-stage credential-bearing inputs privately, verify the real Agent output names,
-and atomically publish checksummed artifacts, redacted logs, installer state,
-and `run.json`. Replacing a completed output requires `--force`.
-
-`install monitor` reuses the compatible cached installer and published state,
-records a redacted result under `<outputDirectory>/monitor/`, and follows CLI
-cancellation. Real artifact generation can download release image content and
-is intentionally not part of normal tests.
-
-The optional `helper` block defines an unattended Fedora Cloud 44 Generic
-x86_64 VM using an existing active local libvirt storage pool. Its managed NAT
-WAN defaults to `172.31.255.0/24`; its isolated LAN is `machineCIDR`. The helper
-uses the first usable LAN address (`.1` in the example) for gateway, DNS, DHCP,
-TFTP and HTTP. The host bridge reserves the final usable address (`.254`).
-
-Run the lifecycle in this order:
-
-```bash
-./bin/okub helper image sync --config examples/sno.yaml
-./bin/okub helper render --config examples/sno.yaml
-./bin/okub helper up --config examples/sno.yaml          # inspect only
-./bin/okub helper up --apply --config examples/sno.yaml  # creates six resources
-virsh -c qemu:///system console okub-lab-helper
+# Check the host environment and external prerequisites.
 ./bin/okub preflight run --config examples/sno.yaml
+
+# Resolve and cache verified release inputs.
+./bin/okub images sync --config examples/sno.yaml
+
+# Build one boot format.
+./bin/okub artifacts build --type iso --config examples/sno.yaml
+# or:
+./bin/okub artifacts build --type pxe --config examples/sno.yaml
+
+# After booting the target hosts, wait for installation completion.
+./bin/okub install monitor --config examples/sno.yaml
 ```
 
-Image sync downloads the official Fedora 44 release 1.7 image and signed
-CHECKSUM into `.local/cache/fedora/44`, verifies the CHECKSUM with the pinned
-Fedora 44 key (`36F612DCF27F7D1A48A835E4DBFCF71C6D9F90A6`) using
-`gpgv`, then verifies every image byte. Render writes
-mode-0600, secret-free NoCloud inputs under
-`.local/fedora-helper/cloud-init`. First boot requires WAN DHCP, DNS, routing,
-Fedora mirrors and package repositories while cloud-init installs dnsmasq,
-HAProxy and nginx. Validate SELinux, firewalld, cloud-init completion and all
-listeners on a disposable Fedora 44 VM before production use.
-Preflight retries are operator-driven: it checks DNS/PTR and all four HAProxy
-listeners but cannot execute `cloud-init status --wait` inside the guest or
-prove DHCP leases from the host.
+Most reports also support `--json`. `--offline` forbids network access where a
+workflow can use verified cached inputs. It does not provide disconnected
+installation because OCI image layers are not mirrored by Okub.
 
-`helper up` is plan-only unless `--apply` is present. It permits only resumable
-creation of the exact six owned resources, or a complete-state stopped-to-running
-transition. `helper down --apply` verifies the state and virsh UUID, requests a
-bounded graceful shutdown, and retains networks, volumes, domain and state. It
-never destroys or force-stops resources. Destruction remains a separately
-reviewed saved-plan operation.
+### Optional network-services helper
 
-Cloud-init creates empty `/srv/okub/http` and `/srv/okub/tftp` directories.
-Artifact synchronization is intentionally not implemented because no secure
-transport/authentication contract exists. Consequently PXE preflight fails
-closed until a future verified atomic synchronization command exists; no PXE
-boot filename is advertised and no PXE readiness is claimed.
+The example configuration defines a Fedora VM that can provide DNS, DHCP, TFTP,
+HTTP, and load-balancer services in a local lab. Its lifecycle is read-only by
+default:
+
+```sh
+./bin/okub helper image sync --config examples/sno.yaml
+./bin/okub helper render --config examples/sno.yaml
+./bin/okub helper up --config examples/sno.yaml
+./bin/okub helper up --apply --config examples/sno.yaml
+```
+
+The helper does not yet receive PXE artifacts, so it does not claim PXE
+readiness. Applying it requires an existing active local libvirt storage pool
+and a first boot with repository access.
+
+## How it works
+
+```text
+okub.yaml + credential references
+              |
+              v
+strict schema and domain validation
+              |
+              v
+read-only environment preflight ------> DNS / network / tools / credentials
+              |
+              v
+verified release resolver ------------> OKD metadata and content-addressed cache
+              |
+              v
+typed installer input renderer -------> install-config.yaml + agent-config.yaml
+              |
+              v
+openshift-install --------------------> Agent ISO or PXE artifact set
+              |
+              +-----------------------> operator-managed delivery
+              |
+              `-----------------------> built-in ephemeral HTTP/PXE serving
+                                              |
+                                              v
+                                      physical OKD hosts
+                                              |
+                                              v
+                                  openshift-install monitoring
+```
+
+Each stage consumes verified output from the previous one. Okub stages
+multi-file changes before publication, does not silently replace differing
+output, and removes private staging data after normal completion.
+
+`openshift-install` remains authoritative for installer formats, host discovery,
+and installation progress. Pixiecore transports verified boot artifacts only;
+it does not introduce a custom target agent, callback API, per-host SSH
+installer, or power-management service.
+
+## Scope
+
+Okub targets:
+
+- physical bare-metal OKD clusters;
+- SNO first, followed by compact and HA topologies;
+- Agent ISO and PXE boot artifacts;
+- existing DHCP or static networking;
+- explicit, ephemeral artifact serving rather than permanent provisioning
+  infrastructure.
+
+Okub does not manage a cluster after installation, reimplement the installer,
+silently change routers or firewalls, or run a permanent DHCP/DNS/PXE service.
+Libvirt is validation infrastructure, not a supported deployment target.
+
+## Output
+
+By default, cluster-specific output is published under
+`./.local/build/<cluster>` and reusable downloads under `./.local/cache`.
+Generated installer inputs, artifacts, checksums, redacted logs, installer
+state, and `run.json` remain separate and inspectable. Existing completed output
+is replaced only with an explicit `--force` where supported.
+
+Never commit generated artifacts, installer state, cache content, pull secrets,
+private keys, or lab state.
+
+## Development
+
+```sh
+just fmt
+just vet
+just test
+just compile
+```
+
+Real artifact generation may download release-image content and is intentionally
+outside the normal unit-test suite. The archived Ansible implementation remains
+under [`archive/`](archive/) for reference and is not executed by the Go CLI.
 
 The version can be injected at build time:
 
-```bash
+```sh
 go build -ldflags '-X main.version=v0.1.0' -o bin/okub ./cmd/okub
 ```
 
-## CLI roadmap
-
-The target command surface is:
-
-```text
-okub init
-okub config validate
-okub config render
-okub preflight run
-okub images sync
-okub artifacts build --type iso
-okub artifacts build --type pxe
-okub artifacts serve
-okub install monitor
-okub helper image sync
-okub helper render
-okub helper up|down [--apply]
-```
-
-Commands are implemented incrementally; all commands above except `init` and
-`artifacts serve` are currently available. Check `okub --help` rather than
-assuming another planned command is available.
-
 ## Documentation
 
-- [Repository contract](docs/00-repo-contract.md) — repository rules and docs map
+- [Repository contract](docs/00-repo-contract.md)
+- [Baseline specification](docs/specs/baseline.md)
 - [General architecture](docs/architectures/00-general.md)
 - [Bare-metal installation path](docs/architectures/baremetal/01-installation-path.md)
-- [Baseline specification](docs/specs/baseline.md)
-- [Delivery plan](docs/plan/summary.md)
+- [Artifact-serving specification](docs/specs/artifact-serving.md)
 - [Architectural decisions](docs/decisions/)
+- [Delivery plan](docs/plan/summary.md)
 
 Target behavior belongs in `docs/specs/`; implementation status belongs in
-`docs/plan/`; operator procedures will be added only after their workflows are
-implemented and tested.
+`docs/plan/`. The README summarizes both and must not imply that a planned
+feature is available.
 
 ## Security
 
-Never commit pull secrets, private keys, installer state, generated cluster
-artifacts, cache content, or lab state. Okub configuration references credential
-files; reports and logs must redact their values.
+Credentials are referenced by path rather than embedded in `okub.yaml`.
+Okub redacts credential values from reports and logs, verifies downloaded tools,
+uses restrictive permissions for private staging, and requires explicit flags
+for infrastructure-changing actions.
+
+Please report suspected vulnerabilities privately rather than opening an issue
+containing credentials or installation state.
 
 ## License
 

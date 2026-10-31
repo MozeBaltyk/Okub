@@ -107,11 +107,12 @@ semantic contract internally. Operators may additionally run `cloud-init schema
 
 Cloud-init creates empty artifact directories only. It does not claim that PXE
 artifacts are present and dnsmasq advertises no boot filename, even when
-`boot.method` is `pxe`. A later synchronization command must stage files on the helper, verify
-digests, atomically publish a complete artifact set, and define authentication
-and rollback; it must not rebuild the root volume. A separately managed data
-volume can replace this contract later, but is not part of the six-resource
-allowlist. Virtiofs is not assumed.
+`boot.method` is `pxe`. Okub's explicit ephemeral Pixiecore command supplies
+ProxyDHCP and serves the verified artifact set from the operator host; the
+helper remains the site DHCP/DNS/load-balancer simulation and does not receive
+artifact copies. A future helper-hosted artifact mode would require a separate
+authenticated, digest-verified, atomic synchronization contract. Virtiofs is
+not assumed.
 
 ## Dependency and plan contract
 

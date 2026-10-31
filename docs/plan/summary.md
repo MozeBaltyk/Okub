@@ -12,10 +12,10 @@ Libvirt validates that path; it is not a separate provider workstream.
 | [02](phase-02-installer-inputs.md) | complete | Deterministic installer configuration |
 | [03](phase-03-preflight.md) | complete | Bare-metal prerequisite report |
 | [04](phase-04-release-cache.md) | complete | Verified OKD tools and image cache |
-| [05](phase-05-boot-artifacts.md) | gate pending | Automated Agent ISO/PXE contract implemented; real SNO artifacts pending |
-| [06](phase-06-artifact-serving.md) | planned | Explicit ephemeral artifact serving |
-| [07](phase-07-libvirt-validation.md) | planned | Disposable validation of the bare-metal path |
-| [08](phase-08-mvp-topologies.md) | planned | Compact and HA MVP completion |
+| [05](phase-05-boot-artifacts.md) | PXE gate pending | Automated Agent ISO/PXE contract implemented; real SNO ISO verified |
+| [06](phase-06-artifact-serving.md) | core complete, observability/real gate pending | Explicit ephemeral artifact serving |
+| [07](phase-07-libvirt-validation.md) | contract complete, KVM gate pending | Disposable validation of the bare-metal path |
+| [08](phase-08-mvp-topologies.md) | contract complete, real gate pending | Compact and HA MVP completion |
 | [09](phase-09-post-mvp.md) | partial, brought forward | Fedora Cloud 44 helper image, render, and guarded VM lifecycle implemented; other workstreams deferred |
 
 The first release gate is Phase 05: SNO can produce verified boot artifacts.

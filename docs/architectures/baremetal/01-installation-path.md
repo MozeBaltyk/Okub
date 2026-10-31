@@ -46,3 +46,39 @@ Artifact export requires no Okub network service. When serving is selected,
 Okub uses the same published artifact manifest and starts only the listeners
 required by the chosen mode. See the
 [artifact-serving spec](../../specs/artifact-serving.md).
+
+## Ephemeral PXE runtime
+
+```text
+operator
+   |
+   | okub artifacts serve --mode pxe
+   v
+verify manifest, files, network selection, ports, and privileges
+   |
+   v
+bind ProxyDHCP + TFTP + HTTP as one supervised serving unit
+   |
+   v
+report ready only after every required listener is accepting traffic
+   |
+   +<--- firmware PXE request
+   |       normalize architecture and MAC
+   |       reject unsupported or unknown clients
+   |
+   +---> iPXE program and host boot specification
+   +---> verified kernel, initramfs, and rootfs reference
+   |
+   v
+Agent-based Installer takes installation authority
+   |
+   v
+openshift-install monitor
+```
+
+The bind address controls local listeners; the advertised address must be
+reachable by target hosts and is used in generated boot URLs. Boot requests may
+be repeated and do not create installation state. Okub supervises transport and
+captures redacted diagnostics, while `openshift-install` owns host discovery,
+installation progress, and completion. This boundary is recorded in
+[ADR-05](../../decisions/ADR-05-boot-transport-boundary.md).

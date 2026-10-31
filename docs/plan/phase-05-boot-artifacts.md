@@ -30,7 +30,14 @@ ISO/PXE output contracts, checksums and metadata, redaction, cancellation,
 monitoring, CLI results, and atomic create/replace/rollback behavior without
 network access. The common Go quality gate and focused race tests pass.
 
-The phase remains incomplete until a supported environment uses the real cached
-OKD installer and pinned release image to produce a non-empty SNO Agent ISO and
-the complete PXE set. That network- and storage-intensive gate was not run as
-part of the normal automated test suite.
+A connected build with `openshift-install 4.20.0-okd-scos.17` and the pinned
+release image produced a 924,307,456-byte SNO Agent ISO. Its published SHA-256
+matched `run.json`, the release inputs remained verified cache hits, and
+pull-secret material was absent from the published installer log and run
+metadata.
+
+The phase remains incomplete until a KVM-capable supported environment produces
+and verifies the complete PXE set. The current WSL2 validation host does not
+expose hardware virtualization to libvirt, so its Fedora prerequisite helper
+cannot start as a KVM domain; software-emulated TCG is intentionally not added
+to the supported helper contract solely to bypass this gate.
